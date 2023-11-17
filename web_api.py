@@ -10,7 +10,7 @@ def index():
 
 @app.get('/running_client')
 def get_running_client():
-    return 0
+    return "0"
 
 
 def run_web_api():
