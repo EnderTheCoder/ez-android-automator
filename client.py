@@ -33,7 +33,7 @@ class AndroidClient:
     def refresh_xml(self):
         self.xml = self.dump_xml()
 
-    def get_xml_node_by_attr(self, attrs) -> bs4.ResultSet:
+    def find_xml_by_attr(self, attrs) -> bs4.ResultSet:
         parser = BeautifulSoup(self.xml, 'xml')
         return parser.find_all(attrs=attrs)
 
