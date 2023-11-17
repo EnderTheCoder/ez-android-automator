@@ -1,4 +1,4 @@
-from client import PublishClient
+from client import PublishClient, AndroidClient
 
 
 class Stage:
@@ -41,3 +41,19 @@ class PublishTask:
 
     def is_exception(self):
         return self.exception is None
+
+
+class DouyinVideoPublishTask:
+    class OpenAppStage(Stage):
+        def run(self, client: PublishClient):
+            client.device.app_start('com.ss.android.ugc.aweme')
+
+    class ClickPublishButtonStage(Stage):
+        def run(self, client: PublishClient):
+            pass
+            # def func(_client: AndroidClient):
+            #     _client.find_xml_by_attr()
+            #     pass
+            # client.wait_until_finish(, )
+    def __init__(self, title: str, content, video):
+        super().__init__(title, content, video, None)
