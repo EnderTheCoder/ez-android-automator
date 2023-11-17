@@ -1,0 +1,3 @@
+# EZ-ANDROID-AUTOMATOR
+
+一个基于uiautomator2的安卓自动化项目，使用beautifulsoup来解析xml，并且提供外部可以调用的HTTP API
