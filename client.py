@@ -129,6 +129,7 @@ class Stage:
     """
     Base abstract class for single step in a task.
     """
+
     def __init__(self, stage_serial):
         self.stage_serial = stage_serial
 
@@ -143,6 +144,7 @@ class PublishTask:
     """
     Base abstract class for a publishing-type task
     """
+
     def __init__(self, title: str, content: str, video: str, photo: str):
         self.title = title
         self.content = content
@@ -204,14 +206,26 @@ class CopyVideoToGalleryStage(Stage):
     """
     Copy a media file to gallery path.
     """
+
     def run(self, client: PublishClient):
         client.copy_media_to_gallery('test.mp4')
+
+
+class SelectVideoStage(Stage):
+    def run(self, client: PublishClient):
+        pass
+
+
+class SetVideoOptions(Stage):
+    def run(self, client: PublishClient):
+        pass
 
 
 class DouyinVideoPublishTask(PublishTask):
     """
     Publish a video on douyin.
     """
+
     def __init__(self, title: str, content, video):
         super().__init__(title, content, video, '')
         self.stages.append(OpenAppStage(0))
