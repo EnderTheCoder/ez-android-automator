@@ -210,7 +210,7 @@ class CopyVideoToGalleryStage(Stage):
 
 class DouyinVideoPublishTask(PublishTask):
     """
-    Publish video on douyin.
+    Publish a video on douyin.
     """
     def __init__(self, title: str, content, video):
         super().__init__(title, content, video, '')
