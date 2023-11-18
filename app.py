@@ -27,5 +27,6 @@ class App:
         self.clients = dict[str, AndroidClient]
         self.vault = shelve.open('vault')
         self.clients = self.vault['clients']
+
     def read_clients(self):
         pass

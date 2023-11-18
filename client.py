@@ -14,7 +14,6 @@ from bs4 import BeautifulSoup
 import time
 
 
-
 def create_network_client(addr):
     return AndroidClient(uiautomator2.connect(addr))
 
