@@ -207,6 +207,10 @@ class CopyVideoToGalleryStage(Stage):
     Copy a media file to gallery path.
     """
 
+    def __init__(self, stage_serial, video, ):
+        super().__init__(stage_serial)
+        self.video = video
+
     def run(self, client: PublishClient):
         client.copy_media_to_gallery('test.mp4')
 
@@ -248,7 +252,10 @@ class SetVideoOptions(Stage):
 
         client.wait_until_finish(is_title_blank)
         client.click_xml_node(client.rs[0])
+        client.device.send_keys(self.title)
+        client.device.keyevent('back')
         client.find_xml_by_attr({'text': '发布'})
+        client.click_xml_node(client.rs[0])
         pass
 
 
@@ -260,7 +267,7 @@ class DouyinVideoPublishTask(PublishTask):
     def __init__(self, title: str, content, video):
         super().__init__(title, content, video, '')
         self.stages.append(OpenAppStage(0))
-        self.stages.append(CopyVideoToGalleryStage(1))
+        self.stages.append(CopyVideoToGalleryStage(1, video))
         self.stages.append(ClickPublishButtonStage(2))
         self.stages.append(SelectVideoStage(3))
         self.stages.append(SetVideoOptions(4, title))
