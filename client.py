@@ -212,12 +212,43 @@ class CopyVideoToGalleryStage(Stage):
 
 
 class SelectVideoStage(Stage):
+    """
+    Choose the first video in gallery and press 'next' button.
+    """
+
     def run(self, client: PublishClient):
-        pass
+        def is_video_tag(client_: PublishClient):
+            return len(client_.find_xml_by_attr({'text': '视频'})) > 0
+
+        client.wait_until_finish(is_video_tag)
+        client.click_xml_node(client.rs[0])
+
+        def is_first_img(client_: PublishClient):
+            return len(
+                client_.find_xml_by_attr({'resource-id': 'com.ss.android.ugc.aweme:id/no0', 'index': '0'})) > 0
+
+        client.wait_until_finish(is_first_img)
+        client.click_xml_node(client.rs[0])
+
+        def is_next_button(client_: PublishClient):
+            return len(client_.find_xml_by_attr({'text': '下一步'}))
+
+        client.wait_until_finish(is_next_button)
+        client.click_xml_node(client.rs[0])
 
 
 class SetVideoOptions(Stage):
+    def __init__(self, stage_serial, title: str):
+        super().__init__(stage_serial)
+        self.title = title
+
     def run(self, client: PublishClient):
+        def is_title_blank(client_: PublishClient):
+            return len(client_.find_xml_by_attr({'text': '添加作品描述..'}))
+
+        client.wait_until_finish(is_title_blank)
+        client.click_xml_node(client.rs[0])
+        client.find_xml_by_attr({'text': '发布'})
         pass
 
 
@@ -231,3 +262,5 @@ class DouyinVideoPublishTask(PublishTask):
         self.stages.append(OpenAppStage(0))
         self.stages.append(CopyVideoToGalleryStage(1))
         self.stages.append(ClickPublishButtonStage(2))
+        self.stages.append(SelectVideoStage(3))
+        self.stages.append(SetVideoOptions(4, title))
