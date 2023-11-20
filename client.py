@@ -23,6 +23,11 @@ def create_usb_client(serial: str = None, init: bool = False):
 
 
 def parse_coordinates(bounds: str):
+    """
+    Parse bounds string in xml attribute 'bounds' and make a set of coordinates indicates two point on screen.
+    :param bounds: bounds string in xml attribute 'bounds', example:[162,36][192,79]
+    :return: a set of coordinates indicates two point on screen
+    """
     coordinates = []
     temp = ""
     coordinate_flag = False
@@ -204,7 +209,7 @@ class ClientTask:
         self.exception = None
         self.exception: Exception
 
-    def run(self, client: PublishClient):
+    def run(self, client: AndroidClient):
         try:
             for i, stage in enumerate(self.stages):
                 self.current_stage = i
