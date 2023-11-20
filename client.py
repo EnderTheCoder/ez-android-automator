@@ -103,7 +103,7 @@ class AndroidClient:
     def wait_to_click(self, attr: dict, timeout=5, gap=0):
         """
         Use given params to find the right node and click it. This method is used on the most common situations.
-        An exception will be thrown if it finds nothing with the given attr param.
+        An exception will be thrown if it finds nothing using the given attr param.
         :param gap: the gap time in secs between finding and clicking.
         :param timeout: Max time to wait in secs on this element.
         :param attr: the attribute used on finding xml nodes.
