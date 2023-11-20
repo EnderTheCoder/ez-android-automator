@@ -97,7 +97,7 @@ class AndroidClient:
         :param package_name: package name of the app
         :return: None
         """
-        self.device.wait_activity('{}/{}.main.MainActivity'.format(package_name, package_name))
+        self.device.shell('am start -n {}/{}.main.MainActivity'.format(package_name, package_name))
 
     def dump_xml(self):
         return self.device.dump_hierarchy()
