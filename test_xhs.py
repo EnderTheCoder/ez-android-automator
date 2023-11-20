@@ -2,7 +2,7 @@
 @Time: 2023/11/20 15:57
 @Auth: EnderTheCoder
 @Email: ggameinvader@gmail.com
-@File: test_xhs.py.py
+@File: test_xhs.py
 @IDE: PyCharm
 @Motto：The only one true Legendary Grandmaster.
 """
