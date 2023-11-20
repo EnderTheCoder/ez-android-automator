@@ -100,6 +100,22 @@ class AndroidClient:
     def click_xml_node(self, node):
         self.click_center(parse_coordinates(node['bounds']))
 
+    def wait_to_click(self, attr: dict, timeout=5, gap=0):
+        """
+        Use given params to find the right node and click it. This method is used on the most common situations.
+        A exception will be thrown if it finds nothing with the given attr param.
+        :param gap: the gap time in secs between finding and clicking.
+        :param timeout: Max time to wait in secs on this element.
+        :param attr: the attribute used on finding xml nodes.
+        :return: None
+        """
+        def bool_lambda(client_: PublishClient):
+            return len(client_.find_xml_by_attr(attr)) > 0
+
+        self.wait_until_finish(bool_lambda, timeout=timeout)
+        time.sleep(gap)
+        self.click_xml_node(self.rs[0])
+
 
 class PublishClient(AndroidClient):
     """
@@ -173,6 +189,3 @@ class PublishTask:
 
     def is_exception(self):
         return self.exception is None
-
-
-

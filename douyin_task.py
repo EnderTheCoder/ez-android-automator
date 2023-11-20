@@ -7,6 +7,7 @@ class OpenAppStage(Stage):
     """
 
     def run(self, client: PublishClient):
+        client.device.app_stop('com.ss.android.ugc.aweme')
         client.device.shell('am start -n com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.main.MainActivity')
 
 
@@ -33,12 +34,12 @@ class CopyVideoToGalleryStage(Stage):
     Copy a media file to gallery path.
     """
 
-    def __init__(self, stage_serial, video, ):
+    def __init__(self, stage_serial, video):
         super().__init__(stage_serial)
         self.video = video
 
     def run(self, client: PublishClient):
-        client.copy_media_to_gallery('test.mp4')
+        client.copy_media_to_gallery(self.video)
 
 
 class SelectVideoStage(Stage):
