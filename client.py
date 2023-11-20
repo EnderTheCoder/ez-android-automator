@@ -63,15 +63,18 @@ class TaskExceptionHandler:
 
 class AndroidClient:
     """
-    Base client for controlling android device
+    Base client for controlling android devices
     """
 
     def __init__(self, device: uiautomator2.Device):
+        self.exception_handler = None
         self.rs = None
         self.device = device
         self.xml = ''
         self.task = None
-        self.exception_handler = None
+        self.task: ClientTask
+        self.exception_handler: TaskExceptionHandler
+        self.rs: bs4.ResultSet
 
     def restart_app(self, package_name: str):
         """
@@ -199,6 +202,7 @@ class ClientTask:
         self.stages = list[Stage]()
         self.current_stage = -1
         self.exception = None
+        self.exception: Exception
 
     def run(self, client: PublishClient):
         try:
