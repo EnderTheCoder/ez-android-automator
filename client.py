@@ -56,6 +56,16 @@ class AndroidClient:
         self.device = device
         self.xml = ''
 
+    def restart_app(self, package_name: str):
+        """
+        Restart app by package name. This will reset app state to open state.
+        Notice: some apps cannot be started by app_start, use adb shell am instead.
+        :param package_name: package name of the app
+        :return: None
+        """
+        self.device.app_stop(package_name)
+        self.device.app_start(package_name)
+
     def dump_xml(self):
         return self.device.dump_hierarchy()
 
@@ -109,6 +119,7 @@ class AndroidClient:
         :param attr: the attribute used on finding xml nodes.
         :return: None
         """
+
         def bool_lambda(client_: PublishClient):
             return len(client_.find_xml_by_attr(attr)) > 0
 
