@@ -13,8 +13,7 @@ from douyin_task import CopyVideoToGalleryStage
 
 class OpenAppStage(Stage):
     def run(self, client: PublishClient):
-        client.device.app_stop('com.xingin.xhs')
-        client.device.app_start('com.xingin.xhs')
+        client.restart_app('com.xingin.xhs')
 
 
 class PressPublishButtonStage(Stage):
