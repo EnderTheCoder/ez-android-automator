@@ -66,6 +66,14 @@ class AndroidClient:
         self.device.app_stop(package_name)
         self.device.app_start(package_name)
 
+    def start_app_am(self, package_name: str):
+        """
+        Start app using Activity Manager. Used only when app_start() failed to work.
+        :param package_name: package name of the app
+        :return: None
+        """
+        self.device.wait_activity('{}/{}.main.MainActivity'.format(package_name, package_name))
+
     def dump_xml(self):
         return self.device.dump_hierarchy()
 
