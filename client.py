@@ -115,7 +115,7 @@ class AndroidClient:
         Block current thread until this client reached its destination.
         Args:
             bool_func: Pass in a quick detection lambda function to check if the condition is fulfilled, which will end
-            this loop.
+            this loop. It accepts only one param in type of AndroidClient.
             refresh_xml: Deside if this client's xml will be refreshed in every loop.
             timeout: Max time to wait on this blocking.
         """
@@ -153,7 +153,7 @@ class AndroidClient:
         :return: None
         """
 
-        def bool_lambda(client_: PublishClient):
+        def bool_lambda(client_: AndroidClient):
             return len(client_.find_xml_by_attr(attr)) > 0
 
         self.wait_until_finish(bool_lambda, timeout=timeout)
