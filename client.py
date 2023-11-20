@@ -46,6 +46,21 @@ class ClientWaitTimeout(Exception):
         super().__init__("Client wait too long to do detection on this task.")
 
 
+class TaskExceptionHandler:
+    """
+    Base abstract class for handling exception in execution of tasks. Extend this class to do handling.
+    """
+
+    def handle(self, client, task):
+        """
+        Override this method to handle the exception.
+        :param client: the client that throws the exception
+        :param task: current task in execution
+        :return:
+        """
+        pass
+
+
 class AndroidClient:
     """
     Base client for controlling android device
@@ -55,6 +70,8 @@ class AndroidClient:
         self.rs = None
         self.device = device
         self.xml = ''
+        self.task = None
+        self.exception_handler = None
 
     def restart_app(self, package_name: str):
         """
@@ -135,6 +152,15 @@ class AndroidClient:
         time.sleep(gap)
         self.click_xml_node(self.rs[0])
 
+    def run_current_task(self):
+        self.task.run(self)
+
+    def set_task(self, task):
+        self.task = task
+
+    def set_exception_handler(self, handler: TaskExceptionHandler):
+        self.exception_handler = handler
+
 
 class PublishClient(AndroidClient):
     """
@@ -143,7 +169,6 @@ class PublishClient(AndroidClient):
 
     def __init__(self, device: uiautomator2.Device):
         super().__init__(device)
-        self.task = None
 
     def copy_media_to_gallery(self, media_path):
         """
@@ -153,16 +178,10 @@ class PublishClient(AndroidClient):
         gallery_path = "/sdcard/DCIM/Camera/"
         self.device.push(media_path, gallery_path + media_path.split('/')[-1])
 
-    def run_current_task(self):
-        self.task.run(self)
-
-    def set_task(self, task):
-        self.task = task
-
 
 class Stage:
     """
-    Base abstract class for single step in a task.
+    Base abstract class for a single step in a task.
     """
 
     def __init__(self, stage_serial):
@@ -175,16 +194,8 @@ class Stage:
         return self.stage_serial
 
 
-class PublishTask:
-    """
-    Base abstract class for a publishing-type task
-    """
-
-    def __init__(self, title: str, content: str, video: str, photo: str):
-        self.title = title
-        self.content = content
-        self.video = video
-        self.photo = photo
+class ClientTask:
+    def __init__(self):
         self.stages = list[Stage]()
         self.current_stage = -1
         self.exception = None
@@ -196,6 +207,8 @@ class PublishTask:
                 stage.run(client)
         except Exception as e:
             self.exception = e
+            if client.exception_handler is not None:
+                client.exception_handler.handle(client, self)
 
     def get_stage(self):
         return self.current_stage
@@ -208,3 +221,16 @@ class PublishTask:
 
     def is_exception(self):
         return self.exception is None
+
+
+class PublishTask(ClientTask):
+    """
+    Base abstract class for a publishing-type task
+    """
+
+    def __init__(self, title: str, content: str, video: str, photo: str):
+        super().__init__()
+        self.title = title
+        self.content = content
+        self.video = video
+        self.photo = photo
