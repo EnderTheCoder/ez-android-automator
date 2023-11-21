@@ -56,10 +56,10 @@ class TaskExceptionHandler:
     Base abstract class for handling exception in execution of tasks. Extend this class to do handling.
     """
 
-    def handle(self, client, task):
+    def handle(self, _client, task):
         """
         Override this method to handle the exception.
-        :param client: the client that throws the exception
+        :param _client: the client that throws the exception
         :param task: current task in execution
         :return:
         """
@@ -81,14 +81,17 @@ class AndroidClient:
         self.exception_handler: TaskExceptionHandler
         self.rs: bs4.ResultSet
 
-    def restart_app(self, package_name: str):
+    def restart_app(self, package_name: str, clear_data=False):
         """
         Restart app by package name. This will reset app state to open state.
         Notice: some apps cannot be started by app_start, use adb shell am instead.
         :param package_name: package name of the app
+        :param clear_data: clear app data before open
         :return: None
         """
         self.device.app_stop(package_name)
+        if clear_data:
+            self.device.app_clear(package_name)
         self.device.app_start(package_name)
 
     def start_app_am(self, package_name: str):
