@@ -156,12 +156,15 @@ class AndroidClient:
         :return: None
         """
 
+        self.wait_until_found(attr, timeout)
+        time.sleep(gap)
+        self.click_xml_node(self.rs[0])
+
+    def wait_until_found(self, attr: dict, timeout=5):
         def bool_lambda(client_: AndroidClient):
             return len(client_.find_xml_by_attr(attr)) > 0
 
         self.wait_until_finish(bool_lambda, timeout=timeout)
-        time.sleep(gap)
-        self.click_xml_node(self.rs[0])
 
     def run_current_task(self):
         self.task.run(self)
@@ -171,6 +174,21 @@ class AndroidClient:
 
     def set_exception_handler(self, handler: TaskExceptionHandler):
         self.exception_handler = handler
+
+    def drag(self, slider: (int, int, int, int), rail: (int, int, int, int)):
+        self.device.drag((slider[0] + slider[1]) / 2,
+                         (slider[2] + slider[3]) / 2,
+                         rail[1],
+                         (rail[2] + rail[1]) / 2)
+
+    def drag_node(self, slider, rail):
+        self.drag(parse_coordinates(slider['bounds']), parse_coordinates(rail['bounds']))
+
+    def simple_click(self, wait_before=0, wait_after=0):
+        w, h = self.device.window_size()
+        time.sleep(wait_before)
+        self.device.click(w / 2, h / 2)
+        time.sleep(wait_after)
 
 
 class PublishClient(AndroidClient):
@@ -198,7 +216,7 @@ class Stage:
     def __init__(self, stage_serial):
         self.stage_serial = stage_serial
 
-    def run(self, client: PublishClient):
+    def run(self, client: AndroidClient):
         pass
 
     def get_serial(self):

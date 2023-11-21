@@ -14,10 +14,11 @@ from ez_android_automator.unicom_task import UnicomSignTask
 class TestHandler(TaskExceptionHandler):
     def handle(self, _client, task):
         print(client.xml)
+        raise task.exception
 
 
 client = AndroidClient(uiautomator2.connect_usb())
-client.set_task(UnicomSignTask('140203198409211231', ' 御东新区文兴路璀璨天城11号楼23301'))
+client.set_task(UnicomSignTask('152625198812114523', '御东新区文兴路璀璨天城9号楼11103'))
 client.set_exception_handler(TestHandler())
 client.run_current_task()
 pass
