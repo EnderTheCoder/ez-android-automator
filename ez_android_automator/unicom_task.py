@@ -102,7 +102,7 @@ class SignStage(Stage):
         client.simple_click(0, 0.5)
         client.simple_click(0, 0.5)
         try:
-            client.wait_until_found({'text': '广告'})
+            client.wait_until_found({'text': '广告'}, timeout=2)
             client.click_xml_node(list(client.rs[0].parent.parent.children)[1])
         except ClientWaitTimeout:
             pass

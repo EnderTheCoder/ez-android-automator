@@ -18,7 +18,7 @@ class TestHandler(TaskExceptionHandler):
 
 
 client = AndroidClient(uiautomator2.connect_usb())
-client.set_task(UnicomSignTask('152625198812114523', '御东新区文兴路璀璨天城9号楼11103'))
+client.set_task(UnicomSignTask('140623197805140052', ' 御东新区文兴路璀璨天城21号楼2单元2701'))
 client.set_exception_handler(TestHandler())
 client.run_current_task()
 pass
