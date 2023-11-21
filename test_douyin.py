@@ -7,8 +7,8 @@
 @Motto：The only one true Legendary Grandmaster.
 """
 import uiautomator2
-from client import PublishClient
-from douyin_task import DouyinVideoPublishTask
+from ez_android_automator.client import PublishClient
+from ez_android_automator.douyin_task import DouyinVideoPublishTask
 
 client = PublishClient(uiautomator2.connect_usb())
 client.set_task(DouyinVideoPublishTask('test', '', 'test.mp4'))

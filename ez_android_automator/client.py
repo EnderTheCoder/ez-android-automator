@@ -6,7 +6,7 @@
 @IDE: PyCharm
 @Motto：The only one true Legendary Grandmaster.
 
-This file contains core classes and helper functions relating Client, Task and Exception.
+This file contains ez_android_automator classes and helper functions relating Client, Task and Exception.
 """
 import bs4
 import uiautomator2

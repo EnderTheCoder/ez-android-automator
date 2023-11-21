@@ -9,7 +9,7 @@
 Entrance for the program.
 """
 
-import web_api
+from ez_android_automator import web_api
 
 if __name__ == "__main__":
     web_api.run_web_api()

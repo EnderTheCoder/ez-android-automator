@@ -7,8 +7,8 @@
 @Motto：The only one true Legendary Grandmaster.
 """
 import uiautomator2
-from client import PublishClient
-from xhs_task import XhsPublishVideoTask
+from ez_android_automator.client import PublishClient
+from ez_android_automator.xhs_task import XhsPublishVideoTask
 
 client = PublishClient(uiautomator2.connect_usb())
 client.set_task(XhsPublishVideoTask('我的世界模组开发', '自己做的，测试', 'test.mp4'))
