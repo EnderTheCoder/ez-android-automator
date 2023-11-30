@@ -6,6 +6,7 @@
 @IDE: PyCharm
 @Motto：The only one true Legendary Grandmaster.
 """
+import adbutils
 import requests
 from ez_android_automator.client import AndroidClient
 from ez_android_automator.unicom_task import UnicomSignTask
@@ -56,6 +57,9 @@ class UnicomExecutorClient:
         else:
             return data['data']
 
+    def append_device(self, device: uiautomator2.Device):
+        self.android_clients.append(AndroidClient(device))
+
     def report(self, task_id: int, message: str = 'success', is_successful: bool = True, is_kill_task: bool = False):
         response = requests.post(self.addr + '/executor/report', data={
             'task_id': task_id,
@@ -74,6 +78,12 @@ class UnicomExecutorClient:
             device = uiautomator2.connect(ip)
             self.android_clients.append(AndroidClient(device))
         print(f'scan complete, found {len(self.android_clients)} devices')
+
+    def import_devices_from_usb(self):
+        print('importing devices from usb')
+        for device in adbutils.AdbClient().device_list():
+            self.android_clients.append(AndroidClient(uiautomator2.connect_usb(device.serial)))
+        print(f'found {len(self.android_clients)} devices')
 
     def thread_run(self, client: AndroidClient, server_task):
         client.set_task(UnicomSignTask(server_task.profile.social_id, server_task.profile.addr))
