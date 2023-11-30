@@ -97,17 +97,17 @@ class AddressVerifyStage(Stage):
 class SignStage(Stage):
     def run(self, client: AndroidClient):
         client.wait_to_click({'text': '首页'})
-        client.simple_click(0.5)
+        client.simple_click(1)
         client.simple_click(0, 0.5)
         client.simple_click(0, 0.5)
         client.simple_click(0, 0.5)
         try:
             client.wait_until_found({'text': '广告'}, timeout=2)
-            client.click_xml_node(list(client.rs[0].parent.parent.children)[1])
+            client.click_xml_node(client.rs[0].previous)
         except ClientWaitTimeout:
             pass
         client.wait_to_click({'content-desc': '签到'})
-        client.wait_until_found({'text': '签到成功'})
+        client.wait_until_found({'text': '签到签到'})
 
 
 class UnicomSignTask(ClientTask):
@@ -123,3 +123,15 @@ class UnicomSignTask(ClientTask):
         self.stages.append(SlideVerifyStage(4))
         self.stages.append(AddressVerifyStage(5, self.address))
         self.stages.append(SignStage(6))
+
+
+class InstallStage(Stage):
+    def run(self, client: AndroidClient):
+        if 'com.sinovatech.unicom.ui' not in client.device.app_list():
+            client.device.app_install('com.sinovatech.unicom.ui.apk')
+
+
+class UnicomInstallTask(ClientTask):
+    def __init__(self):
+        super().__init__()
+        self.stages.append(InstallStage(0))

@@ -56,6 +56,9 @@ class TaskExceptionHandler:
     Base abstract class for handling exception in execution of tasks. Extend this class to do handling.
     """
 
+    def __init__(self):
+        pass
+
     def handle(self, _client, task):
         """
         Override this method to handle the exception.
@@ -64,6 +67,15 @@ class TaskExceptionHandler:
         :return:
         """
         pass
+
+
+class DebugHandler(TaskExceptionHandler):
+
+    def __init__(self):
+        super().__init__()
+
+    def handle(self, _client, task):
+        _client.device.screenshot("latest_failure.jpg")
 
 
 class AndroidClient:
@@ -190,6 +202,9 @@ class AndroidClient:
         self.device.click(w / 2, h / 2)
         time.sleep(wait_after)
 
+    def is_usable(self):
+        return self.task is None or self.task.is_finished() or self.task.is_exception()
+
 
 class PublishClient(AndroidClient):
     """
@@ -228,6 +243,7 @@ class ClientTask:
         self.stages = list[Stage]()
         self.current_stage = -1
         self.exception = None
+        self.finished = False
         self.exception: Exception
 
     def run(self, client: AndroidClient):
@@ -239,6 +255,7 @@ class ClientTask:
             self.exception = e
             if client.exception_handler is not None:
                 client.exception_handler.handle(client, self)
+        self.finished = True
 
     def get_stage(self):
         return self.current_stage
@@ -247,7 +264,7 @@ class ClientTask:
         return -1 < self.current_stage < len(self.stages) and not self.is_exception()
 
     def is_finished(self):
-        return self.current_stage == len(self.stages)
+        return self.finished
 
     def is_exception(self):
         return self.exception is None
