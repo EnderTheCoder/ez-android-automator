@@ -7,8 +7,8 @@
 @Motto：The only one true Legendary Grandmaster.
 """
 
-from client import PublishTask, Stage, PublishClient
-from douyin_task import CopyVideoToGalleryStage
+from ez_android_automator.client import PublishTask, Stage, PublishClient
+from ez_android_automator.douyin_task import CopyVideoToGalleryStage
 
 
 class OpenAppStage(Stage):
@@ -23,7 +23,8 @@ class PressPublishButtonStage(Stage):
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({'resource-id': 'com.xingin.xhs:id/j17'}, gap=1)
+        # client.wait_to_click({'resource-id': 'com.xingin.xhs:id/j17'}, gap=1)
+        client.wait_to_click({'text': '视频'}, gap=1)
         client.wait_to_click({'resource-id': 'com.xingin.xhs:id/dcy'})
         client.wait_to_click({'content-desc': '下一步'})
         client.wait_to_click({'text': '下一步'})

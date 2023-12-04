@@ -1,4 +1,4 @@
-from client import Stage, PublishClient, PublishTask
+from ez_android_automator.client import Stage, PublishClient, PublishTask
 
 
 class OpenAppStage(Stage):
