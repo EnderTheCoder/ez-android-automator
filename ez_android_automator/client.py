@@ -92,6 +92,7 @@ class AndroidClient:
         self.task: ClientTask
         self.exception_handler: TaskExceptionHandler
         self.rs: bs4.ResultSet
+        self.occupied = False
 
     def restart_app(self, package_name: str, clear_data=False):
         """
@@ -202,8 +203,14 @@ class AndroidClient:
         self.device.click(w / 2, h / 2)
         time.sleep(wait_after)
 
+    def lock(self):
+        self.occupied = True
+
+    def unlock(self):
+        self.occupied = False
+
     def is_usable(self):
-        return self.task is None or self.task.is_finished() or self.task.is_exception()
+        return self.task is None or self.task.is_finished() or self.task.is_exception() and not self.lock
 
 
 class PublishClient(AndroidClient):
@@ -267,7 +274,7 @@ class ClientTask:
         return self.finished
 
     def is_exception(self):
-        return self.exception is None
+        return self.exception is not None
 
 
 class PublishTask(ClientTask):

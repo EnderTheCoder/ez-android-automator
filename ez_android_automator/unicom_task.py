@@ -18,7 +18,7 @@ class OpenAppStage(Stage):
 
 class CleanPopUpsStage(Stage):
     def run(self, client: AndroidClient):
-        client.wait_to_click({'text': '同意'}, timeout=10)
+        client.wait_to_click({'text': '同意'}, timeout=10, gap=0.5)
         client.wait_to_click({'text': '以后再说'})
         pass
 
@@ -86,26 +86,33 @@ class AddressVerifyStage(Stage):
                     pure_children.append(child)
             areas.append(VerifyArea(pure_children[0]['text'], pure_children[1:]))
 
-        for area in areas:
-            for c in area.guess_blank(self.address):
-                client.device.send_keys(c)
+        client.find_xml_by_attr({'text': '进入'})
+        try:
+            for i, area in enumerate(areas):
+                client.click_xml_node(area.blanks[0])
+                for c in area.guess_blank(self.address):
+                    client.device.send_keys(c)
+                    time.sleep(0.5)
+                client.click_xml_node(client.rs[i])
+                client.wait_to_click({'text': '我知道了'}, timeout=3)
                 time.sleep(0.5)
-
-        client.wait_to_click({'text': '进入'})
+        except ClientWaitTimeout:
+            pass
 
 
 class SignStage(Stage):
     def run(self, client: AndroidClient):
         client.wait_to_click({'text': '首页'})
+        try:
+            client.simple_click(1)
+            client.wait_until_found({'text': '请使用联通手机号登录APP，参与本次活动'})
+            client.device.keyevent('back')
+        except ClientWaitTimeout:
+            pass
         client.simple_click(1)
         client.simple_click(0, 0.5)
         client.simple_click(0, 0.5)
         client.simple_click(0, 0.5)
-        try:
-            client.wait_until_found({'text': '广告'}, timeout=2)
-            client.click_xml_node(client.rs[0].previous)
-        except ClientWaitTimeout:
-            pass
         client.wait_to_click({'content-desc': '签到'})
         client.wait_until_found({'text': '签到签到'})
 

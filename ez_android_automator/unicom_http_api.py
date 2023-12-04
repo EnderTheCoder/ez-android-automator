@@ -61,7 +61,7 @@ class UnicomExecutorClient:
         self.android_clients.append(AndroidClient(device))
 
     def report(self, task_id: int, message: str = 'success', is_successful: bool = True, is_kill_task: bool = False):
-        response = requests.post(self.addr + '/executor/report', data={
+        response = requests.post(self.addr + '/executor/report', json={
             'task_id': task_id,
             'message': message,
             'is_successful': is_successful,
@@ -86,29 +86,31 @@ class UnicomExecutorClient:
         print(f'found {len(self.android_clients)} devices')
 
     def thread_run(self, client: AndroidClient, server_task):
-        client.set_task(UnicomSignTask(server_task.profile.social_id, server_task.profile.addr))
+        client.set_task(UnicomSignTask(server_task['profile']['social_id'], server_task['profile']['addr']))
         client.run_current_task()
-        if client.task.is_finished():
+        if not client.task.is_exception():
             self.report(server_task['task_id'], 'success', client.task.is_finished())
-            print(f'Success on task {server_task.task_id}')
+            print('Success on task {}'.format(server_task['task_id']))
         else:
             self.report(server_task['task_id'],
                         f'Stopped at {client.task.current_stage}/{len(client.task.stages)}, reason: {str(client.task.exception)}',
                         client.task.is_finished())
-            print(f'Fail on task {server_task.task_id}')
+            print('Fail on task {}'.format(server_task['task_id']))
+        client.unlock()
 
     def start(self):
         print('start to run tasks on clients:')
         while True:
             server_task = self.pick()
             if server_task is not None:
-                print(f'picked task:{server_task.task_id} from server')
+                print('picked task:{} from server'.format(server_task['task_id']))
                 while True:
                     found_client = False
                     for client in self.android_clients:
                         if client.is_usable():
+                            client.lock()
                             found_client = True
-                            thread = threading.Thread(target=self.thread_run, args=(self, client, server_task))
+                            thread = threading.Thread(target=self.thread_run, args=(client, server_task))
                             thread.start()
                             break
                     if found_client:
