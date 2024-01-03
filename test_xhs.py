@@ -11,7 +11,7 @@ from ez_android_automator.client import PublishClient
 from ez_android_automator.xhs_task import XhsPublishVideoTask
 
 client = PublishClient(uiautomator2.connect_usb())
-client.set_task(XhsPublishVideoTask('我的世界模组开发', '自己做的，测试', 'test.mp4'))
+client.set_task(XhsPublishVideoTask('我的世界模组开发', '自己做的，测试', 'test3.mp4'))
 client.run_current_task()
 pass
 

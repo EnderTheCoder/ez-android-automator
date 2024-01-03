@@ -69,10 +69,12 @@ class TaskExceptionHandler:
         pass
 
 
-class DebugHandler(TaskExceptionHandler):
+class TestHandler(TaskExceptionHandler):
+    def handle(self, _client, task):
+        raise task.exception
 
-    def __init__(self):
-        super().__init__()
+
+class DebugHandler(TaskExceptionHandler):
 
     def handle(self, _client, task):
         _client.device.screenshot("latest_failure.jpg")
@@ -226,8 +228,10 @@ class PublishClient(AndroidClient):
         Copy file to target's gallery.
         """
 
-        gallery_path = "/sdcard/DCIM/Camera/"
-        self.device.push(media_path, gallery_path + media_path.split('/')[-1])
+        gallery_path = "/sdcard/DCIM/"
+        remote_path = gallery_path + media_path.split('/')[-1]
+        self.device.push(media_path, remote_path)
+        self.device.shell(f'am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file://{remote_path}')
 
 
 class Stage:
@@ -275,6 +279,9 @@ class ClientTask:
 
     def is_exception(self):
         return self.exception is not None
+
+    def append(self, stage: Stage):
+        self.stages.append(stage)
 
 
 class PublishTask(ClientTask):
