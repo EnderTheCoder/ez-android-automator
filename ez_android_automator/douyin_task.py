@@ -48,24 +48,10 @@ class SelectVideoStage(Stage):
     """
 
     def run(self, client: PublishClient):
-        def is_video_tag(client_: PublishClient):
-            return len(client_.find_xml_by_attr({'text': '视频'})) > 0
-
-        client.wait_until_finish(is_video_tag)
-        client.click_xml_node(client.rs[0])
-
-        def is_first_img(client_: PublishClient):
-            return len(
-                client_.find_xml_by_attr({'resource-id': 'com.ss.android.ugc.aweme:id/no0', 'index': '0'})) > 0
-
-        client.wait_until_finish(is_first_img)
-        client.click_xml_node(client.rs[0])
-
-        def is_next_button(client_: PublishClient):
-            return len(client_.find_xml_by_attr({'text': '下一步'}))
-
-        client.wait_until_finish(is_next_button)
-        client.click_xml_node(client.rs[0])
+        client.wait_to_click({'text': '视频'})
+        client.wait_to_click({'content-desc': ', 未选中'})
+        client.wait_to_click({'text': '下一步'})
+        client.wait_to_click({'text': '下一步'})
 
 
 class SetVideoOptions(Stage):
@@ -86,6 +72,11 @@ class SetVideoOptions(Stage):
         pass
 
 
+class PublishSuccessfully(Stage):
+    def run(self, client: PublishClient):
+        client.wait_until_found({'text': '发布成功'})
+
+
 class DouyinVideoPublishTask(PublishTask):
     """
     Publish a video on douyin.
@@ -98,3 +89,4 @@ class DouyinVideoPublishTask(PublishTask):
         self.stages.append(ClickPublishButtonStage(2))
         self.stages.append(SelectVideoStage(3))
         self.stages.append(SetVideoOptions(4, title))
+        self.stages.append(PublishSuccessfully(5))
