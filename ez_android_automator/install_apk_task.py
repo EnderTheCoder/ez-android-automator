@@ -37,4 +37,5 @@ class InstallApk(ClientTask):
     def __init__(self, apk_file_name: str, verify_package_name: str):
         super().__init__()
         self.append(InstallStage(0, apk_file_name))
-        self.append(VerifyPackageName(1, verify_package_name))
+        if verify_package_name != 'skip':
+            self.append(VerifyPackageName(1, verify_package_name))
