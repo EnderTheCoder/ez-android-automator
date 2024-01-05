@@ -295,3 +295,25 @@ class PublishTask(ClientTask):
         self.content = content
         self.video = video
         self.photo = photo
+
+
+class DownloadMediaStage(Stage):
+    def __init__(self, serial, url: str):
+        super().__init__(serial)
+        self.url = url
+
+    def run(self, client: AndroidClient):
+        client.restart_app('com.sec.android.app.sbrowser')
+        client.wait_to_click({'resource-id': 'com.sec.android.app.sbrowser:id/location_bar_edit_text'})
+        client.device.send_keys(self.url)
+        client.device.send_action('go')
+
+        time.sleep(10)
+        client.device.click(1020, 1390)
+        time.sleep(1)
+        client.device.click(1020, 1390)
+        time.sleep(1)
+        client.device.click(1020, 1390)
+        client.wait_to_click({'text': '下载'})
+        client.wait_to_click({'text': '下载'})
+        client.wait_until_found({'text': '打开文件'}, timeout=600)

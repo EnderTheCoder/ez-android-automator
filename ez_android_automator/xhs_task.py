@@ -7,7 +7,7 @@
 @Motto：The only one true Legendary Grandmaster.
 """
 
-from ez_android_automator.client import PublishTask, Stage, PublishClient
+from ez_android_automator.client import PublishTask, Stage, PublishClient, DownloadMediaStage
 from ez_android_automator.douyin_task import CopyVideoToGalleryStage
 
 
@@ -52,8 +52,8 @@ class XhsPublishVideoTask(PublishTask):
 
     def __init__(self, title: str, content: str, video: str):
         super().__init__(title, content, video, '')
-        self.stages.append(OpenAppStage(0))
-        self.stages.append(CopyVideoToGalleryStage(1, self.video))
+        self.stages.append(DownloadMediaStage(0, 'http://192.168.3.50:8000/test.mp4'))
+        self.stages.append(OpenAppStage(1))
         self.stages.append(PressPublishButtonStage(2))
         self.stages.append(ChooseFirstVideoStage(3))
         self.stages.append(SetVideoOptionsStage(4, self.title, self.content))
