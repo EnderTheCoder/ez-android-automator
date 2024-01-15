@@ -7,13 +7,13 @@
 @Motto：The only one true Legendary Grandmaster.
 """
 
-from ez_android_automator.client import AndroidClient, create_network_client, TaskCallback, TaskExceptionHandler
+from ez_android_automator.client import create_network_client, TaskCallback, TaskExceptionHandler
 from ez_android_automator.manager import Manager
 from ez_android_automator.xhs_task import XhsPublishVideoTask
 
 
 # extend class to create your own callback. create callback class for each task class.
-# bind callback to task.
+# bind callback to your task.
 class ExampleCallback(TaskCallback):
     def run(self, _task):
         # do something here
@@ -21,7 +21,7 @@ class ExampleCallback(TaskCallback):
 
 
 # extend handler to create your own handler.
-# bind handler to client
+# bind handler to your client.
 class ExampleHandler(TaskExceptionHandler):
     def handle_exception(self, _client, _task):
         # handle problem
