@@ -69,6 +69,10 @@ class Manager:
         return len(self.clients.keys())
 
     def get_pressure(self):
+        """
+        Get pressure of this manager.
+        :return: A percentage representing the busy rate.
+        """
         busy_clients = 0
         for _client in self.clients.values():
             if not _client.is_usable():
