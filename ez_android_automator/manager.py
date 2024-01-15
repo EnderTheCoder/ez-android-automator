@@ -25,6 +25,12 @@ class Manager:
         self.tasks.put((task.priority, task))
 
     def set_max_priority(self, priority: int):
+        """
+        Set max priority of tasks. everytime when a task failed, its priority number will get higher. By the time this
+         number exceeding the max priority, the task will be removed from the queue.
+        :param priority: max priority value
+        :return: None
+        """
         self.max_priority = priority
 
     def run_with_block(self):
