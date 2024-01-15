@@ -33,7 +33,7 @@ class Manager:
         """
         self.max_priority = priority
 
-    def run_with_block(self):
+    def run(self):
         while True:
             if self.tasks.empty():
                 for _client in self.clients.values():
@@ -50,6 +50,9 @@ class Manager:
                     else:
                         self.idle_task()
                         pass
+
+    def run_asynchronously(self):
+        threading.Thread(target=self.run, args=(self,)).start()
 
     def maintain_clients(self):
         """

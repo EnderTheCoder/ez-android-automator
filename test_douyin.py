@@ -11,5 +11,5 @@ from ez_android_automator.client import PublishClient
 from ez_android_automator.douyin_task import DouyinVideoPublishTask
 
 client = PublishClient(uiautomator2.connect_usb())
-client.set_task(DouyinVideoPublishTask('test', '', 'test.mp4'))
+client.set_task(DouyinVideoPublishTask(5, 'test', '', 'test.mp4'))
 client.run_current_task()

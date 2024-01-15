@@ -192,7 +192,7 @@ class AndroidClient:
 
         self.wait_until_finish(bool_lambda, timeout=timeout)
 
-    def run_current_task(self, failure_callback: Callable):
+    def run_current_task(self, failure_callback: Callable = None):
         self.task.run(self)
         if self.task.is_exception() and failure_callback is not None:
             failure_callback(self)
