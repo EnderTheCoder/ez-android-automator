@@ -8,7 +8,6 @@
 """
 import queue
 import warnings
-
 import client
 import threading
 
