@@ -52,6 +52,11 @@ class Manager:
                         pass
 
     def maintain_clients(self):
+        """
+        Maintain clients connected to this manager. When a client is dead, the manager will print an error message in
+        console and remove this client.
+        :return: None
+        """
         for serial in self.clients.keys():
             if not self.clients[serial].alive():
                 warnings.warn(f'Client {serial} disconnected.')
@@ -59,6 +64,16 @@ class Manager:
 
     def maintain_app_login(self):
         pass
+
+    def count_clients_alive(self):
+        return len(self.clients.keys())
+
+    def get_pressure(self):
+        busy_clients = 0
+        for _client in self.clients.values():
+            if not _client.is_usable():
+                busy_clients += 1
+        return busy_clients / len(self.clients)
 
     def idle_task(self):
         self.maintain_clients()

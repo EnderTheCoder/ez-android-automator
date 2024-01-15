@@ -53,6 +53,15 @@ class ClientWaitTimeout(Exception):
         super().__init__("Client wait too long to do detection on this task.")
 
 
+class TaskCallback:
+    """
+    Executed when a task is completed.
+    """
+
+    def run(self, task):
+        pass
+
+
 class TaskExceptionHandler:
     """
     Base abstract class for handling exception in execution of tasks. Extend this class to do handling.
@@ -187,6 +196,7 @@ class AndroidClient:
         self.task.run(self)
         if self.task.is_exception() and failure_callback is not None:
             failure_callback(self)
+        self.task = None
 
     def set_task(self, task):
         self.task = task
@@ -263,6 +273,8 @@ class ClientTask:
         self.exception = None
         self.finished = False
         self.exception: Exception
+        self.callback = None
+        self.callback: TaskCallback
 
     def run(self, client: AndroidClient):
         try:
@@ -274,6 +286,8 @@ class ClientTask:
             if client.exception_handler is not None:
                 client.exception_handler.handle(client, self)
         self.finished = True
+        if self.callback is not None:
+            self.callback.run(self)
 
     def get_stage(self):
         return self.current_stage
@@ -289,6 +303,9 @@ class ClientTask:
 
     def append(self, stage: Stage):
         self.stages.append(stage)
+
+    def set_callback(self, callback: TaskCallback):
+        self.callback = callback
 
 
 class PublishTask(ClientTask):
@@ -322,7 +339,6 @@ class DownloadMediaStage(Stage):
         client.wait_to_click({'resource-id': 'com.sec.android.app.sbrowser:id/location_bar_edit_text'})
         client.device.send_keys(self.url)
         client.device.send_action('go')
-
         time.sleep(10)
         client.device.click(1020, 1390)
         time.sleep(1)
