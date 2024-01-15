@@ -12,12 +12,16 @@ from ez_android_automator.manager import Manager
 from ez_android_automator.xhs_task import XhsPublishVideoTask
 
 
+# extend class to create your own callback. create callback class for each task class.
+# bind callback to task.
 class ExampleCallback(TaskCallback):
     def run(self, _task):
         # do something here
         pass
 
 
+# extend handler to create your own handler.
+# bind handler to client
 class ExampleHandler(TaskExceptionHandler):
     def handle_exception(self, _client, _task):
         # handle problem

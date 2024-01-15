@@ -55,7 +55,7 @@ class ClientWaitTimeout(Exception):
 
 class TaskCallback:
     """
-    Executed when a task is completed.
+    Executed when a task is completed. Use this to pass data back to main system.
     """
 
     def run(self, task):
