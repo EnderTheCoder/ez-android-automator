@@ -82,8 +82,8 @@ class DouyinVideoPublishTask(PublishTask):
     Publish a video on douyin.
     """
 
-    def __init__(self, title: str, content: str, video: str):
-        super().__init__(title, content, video, '')
+    def __init__(self, priority: int, title: str, content: str, video: str):
+        super().__init__(priority, title, content, video, '')
         self.stages.append(OpenAppStage(0))
         self.stages.append(CopyVideoToGalleryStage(1, video))
         self.stages.append(ClickPublishButtonStage(2))

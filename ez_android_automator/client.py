@@ -8,6 +8,8 @@
 
 This file contains ez_android_automator classes and helper functions relating Client, Task and Exception.
 """
+from typing import Callable
+
 import bs4
 import uiautomator2
 from bs4 import BeautifulSoup
@@ -181,8 +183,10 @@ class AndroidClient:
 
         self.wait_until_finish(bool_lambda, timeout=timeout)
 
-    def run_current_task(self):
+    def run_current_task(self, failure_callback: Callable):
         self.task.run(self)
+        if self.task.is_exception() and failure_callback is not None:
+            failure_callback(self)
 
     def set_task(self, task):
         self.task = task
@@ -214,6 +218,9 @@ class AndroidClient:
     def is_usable(self):
         return self.task is None or self.task.is_finished() or self.task.is_exception() and not self.lock
 
+    def alive(self):
+        return self.device.alive() and self.device.agent_alive()
+
 
 class PublishClient(AndroidClient):
     """
@@ -228,7 +235,7 @@ class PublishClient(AndroidClient):
         Copy file to target's gallery.
         """
 
-        gallery_path = "/sdcard/DCIM/"
+        gallery_path = "/sdcard/DCIM/Camera/"
         remote_path = gallery_path + media_path.split('/')[-1]
         self.device.push(media_path, remote_path)
         self.device.shell(f'am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file://{remote_path}')
@@ -289,12 +296,20 @@ class PublishTask(ClientTask):
     Base abstract class for a publishing-type task
     """
 
-    def __init__(self, title: str, content: str, video: str, photo: str):
+    def __init__(self, priority: int, title: str, content: str, video: str, photo: str):
         super().__init__()
+        self.priority = priority
         self.title = title
         self.content = content
         self.video = video
         self.photo = photo
+
+    def shift_down_priority(self):
+        self.current_stage = -1
+        self.exception = None
+        self.finished = False
+        self.exception: Exception
+        self.priority += 1
 
 
 class DownloadMediaStage(Stage):

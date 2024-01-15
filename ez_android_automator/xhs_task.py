@@ -23,7 +23,6 @@ class PressPublishButtonStage(Stage):
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
-        # client.wait_to_click({'resource-id': 'com.xingin.xhs:id/j17'}, gap=1)
         client.wait_to_click({'text': '视频'}, gap=1)
         client.wait_until_found({'text': '视频'})
         area = BeautifulSoup(str(client.rs[0].next.next.next.next.next), 'xml')
@@ -53,9 +52,9 @@ class XhsPublishVideoTask(PublishTask):
     Publish a video on Xiaohongshu.
     """
 
-    def __init__(self, title: str, content: str, video: str):
-        super().__init__(title, content, video, '')
-        self.stages.append(DownloadMediaStage(0, 'http://192.168.3.50:8000/test.mp4'))
+    def __init__(self, priority: int, title: str, content: str, video: str, video_url: str):
+        super().__init__(priority, title, content, video, '')
+        self.stages.append(DownloadMediaStage(0, video_url))
         self.stages.append(OpenAppStage(1))
         self.stages.append(PressPublishButtonStage(2))
         self.stages.append(ChooseFirstVideoStage(3))
