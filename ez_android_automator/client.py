@@ -186,7 +186,7 @@ class AndroidClient:
         time.sleep(gap)
         self.click_xml_node(self.rs[0])
 
-    def wait_until_found(self, attr: dict, timeout=5):
+    def wait_until_found(self, attr: dict, timeout=10):
         def bool_lambda(client_: AndroidClient):
             return len(client_.find_xml_by_attr(attr)) > 0
 
@@ -337,14 +337,20 @@ class DownloadMediaStage(Stage):
     def run(self, client: AndroidClient):
         client.restart_app('com.sec.android.app.sbrowser')
         client.wait_to_click({'resource-id': 'com.sec.android.app.sbrowser:id/location_bar_edit_text'})
+        print("self.urlself.urlself.urlself.url",self.url)
         client.device.send_keys(self.url)
         client.device.send_action('go')
-        time.sleep(10)
-        client.device.click(1020, 1390)
+        time.sleep(5)
+        # client.device.click(972, 1902)
+        # time.sleep(1)
+        # client.device.click(972, 1902)
+        # time.sleep(1)
+        # client.device.click(972, 1902)
+        client.device.click(1014, 1325)
         time.sleep(1)
-        client.device.click(1020, 1390)
+        client.device.click(1014, 1325)
         time.sleep(1)
-        client.device.click(1020, 1390)
+        client.device.click(1014, 1325)
         client.wait_to_click({'text': '下载'})
         client.wait_to_click({'text': '下载'})
         client.wait_until_found({'text': '打开文件'}, timeout=600)
