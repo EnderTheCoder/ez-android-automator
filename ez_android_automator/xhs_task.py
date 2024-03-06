@@ -7,8 +7,8 @@
 @Motto：The only one true Legendary Grandmaster.
 """
 from bs4 import BeautifulSoup
-from ez_android_automator.client import PublishTask, Stage, PublishClient, DownloadMediaStage
-from ez_android_automator.douyin_task import CopyVideoToGalleryStage
+from ez_android_automator.client import PublishTask, Stage, PublishClient, DownloadMediaStage, PhoneLoginTask, \
+    PasswordLoginTask
 
 
 class OpenAppStage(Stage):
@@ -59,3 +59,8 @@ class XhsPublishVideoTask(PublishTask):
         self.stages.append(PressPublishButtonStage(2))
         self.stages.append(ChooseFirstVideoStage(3))
         self.stages.append(SetVideoOptionsStage(4, self.title, self.content))
+
+
+class XhsPhoneLoginTask(PhoneLoginTask):
+    def __init__(self, phone):
+        super().__init__(phone)

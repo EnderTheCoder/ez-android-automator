@@ -329,6 +329,41 @@ class PublishTask(ClientTask):
         self.priority += 1
 
 
+class LoginTask(ClientTask):
+    """
+    Base abstract class for logining on apps.
+    """
+    pass
+
+
+class PasswordLoginTask(LoginTask):
+    """
+    Base abstract class for using password to login on apps.
+    """
+
+    def __init__(self, account: str, password: str):
+        """
+        :param account: Can be username or phone number, depends on real situations.
+        :param password: Password used to login on apps.
+        """
+        self.account = account
+        self.password = password
+        super().__init__()
+
+
+class PhoneLoginTask(LoginTask):
+    """
+    Base abstract class for using phone verify-code to login on apps.
+    """
+
+    def __init__(self, phone: str):
+        """
+        :param phone: User phone number
+        """
+        self.phone = phone
+        super().__init__()
+
+
 class DownloadMediaStage(Stage):
     def __init__(self, serial, url: str):
         super().__init__(serial)
