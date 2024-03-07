@@ -362,6 +362,7 @@ class PhoneLoginTask(LoginTask):
         :param verify_callback: A callback function, will be called after the phone verification code has been fired.
         """
         self.phone = phone
+        self.verify_callback = verify_callback
         super().__init__()
 
 
@@ -373,7 +374,7 @@ class DownloadMediaStage(Stage):
     def run(self, client: AndroidClient):
         client.restart_app('com.sec.android.app.sbrowser')
         client.wait_to_click({'resource-id': 'com.sec.android.app.sbrowser:id/location_bar_edit_text'})
-        print("self.urlself.urlself.urlself.url",self.url)
+        print("self.urlself.urlself.urlself.url", self.url)
         client.device.send_keys(self.url)
         client.device.send_action('go')
         time.sleep(5)
