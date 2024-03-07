@@ -8,8 +8,10 @@
 """
 import uiautomator2
 from ez_android_automator.client import PublishClient
-from ez_android_automator.douyin_task import DouyinVideoPublishTask
+from ez_android_automator.douyin_task1 import DouyinVideoPublishTask
 
 client = PublishClient(uiautomator2.connect_usb())
-client.set_task(DouyinVideoPublishTask(5, 'test', '', 'test.mp4'))
+# print(client.dump_xml())
+# exit()
+client.set_task(DouyinVideoPublishTask(5, '', '我总在忙忙碌碌寻宝藏', 'http://192.168.3.8:8000/media/videos/test.mp4'))
 client.run_current_task()
