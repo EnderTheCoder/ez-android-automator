@@ -6,14 +6,24 @@
 @IDE: PyCharm
 @Motto：The only one true Legendary Grandmaster.
 """
+import time
+from typing import Callable
+
 from bs4 import BeautifulSoup
 from ez_android_automator.client import PublishTask, Stage, PublishClient, DownloadMediaStage, PhoneLoginTask, \
-    PasswordLoginTask
+    PasswordLoginTask, AndroidClient, WaitCallBackStage
 
 
 class OpenAppStage(Stage):
+
+    def __init__(self, serial, clear_data: bool = False):
+        self.clear_data = clear_data
+        super().__init__(serial)
+
     def run(self, client: PublishClient):
-        client.restart_app('com.xingin.xhs')
+        client.restart_app('com.xingin.xhs', self.clear_data)
+        if self.clear_data:
+            client.wait_to_click({'text': '同意'})
 
 
 class PressPublishButtonStage(Stage):
@@ -28,7 +38,7 @@ class ChooseFirstVideoStage(Stage):
         # area = BeautifulSoup(str(client.rs[0].next.next.next.next.next), 'xml')
         # elem = list(area.find_all(attrs={'class': 'android.widget.FrameLayout'})[3].children)[1]
         # client.click_xml_node(elem)
-        client.device.click(310,445)
+        client.device.click(310, 445)
         client.wait_to_click({'content-desc': '下一步'})
         client.wait_to_click({'text': '下一步'})
 
@@ -48,6 +58,30 @@ class SetVideoOptionsStage(Stage):
         client.wait_to_click({'text': '发布笔记'})
 
 
+class BeforeLoginStage(Stage):
+    def __init__(self, serial, phone: str):
+        super().__init__(serial)
+        self.phone = phone
+
+    def run(self, client: AndroidClient):
+        client.wait_to_click({'text': '手机号登录'})
+        client.wait_to_click({'text': '请输入手机号码'})
+        client.device.send_keys(self.phone)
+        client.wait_to_click({'text': '验证并登录'})
+        time.sleep(0.5)
+        client.wait_to_click({'text': '同意并继续'})
+
+
+class PhoneAuthCodeStage(Stage):
+    def __init__(self, serial, code):
+        super().__init__(serial)
+        self.code = code
+
+    def run(self, client: AndroidClient):
+        client.wait_to_click({'text': '输入验证码'})
+        client.device.send_keys(self.code)
+
+
 class XhsPublishVideoTask(PublishTask):
     """
     Publish a video on Xiaohongshu.
@@ -63,5 +97,9 @@ class XhsPublishVideoTask(PublishTask):
 
 
 class XhsPhoneLoginTask(PhoneLoginTask):
-    def __init__(self, phone):
-        super().__init__(phone)
+    def __init__(self, phone: str, callback: Callable[[], str]):
+        super().__init__(phone, callback)
+        self.stages.append(OpenAppStage(0, True))
+        self.stages.append(BeforeLoginStage(1, phone))
+        self.stages.append(WaitCallBackStage(2, 60, callback, self))
+        self.stages.append(PhoneAuthCodeStage(3, self.code))

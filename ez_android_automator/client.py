@@ -8,6 +8,7 @@
 
 This file contains ez_android_automator classes and helper functions relating Client, Task and Exception.
 """
+import threading
 from typing import Callable
 
 import bs4
@@ -51,6 +52,11 @@ def parse_coordinates(bounds: str):
 class ClientWaitTimeout(Exception):
     def __init__(self):
         super().__init__("Client wait too long to do detection on this task.")
+
+
+class PhoneLoginException(Exception):
+    def __init__(self, msg: str):
+        super().__init__(msg)
 
 
 class TaskCallback:
@@ -256,7 +262,7 @@ class Stage:
     Base abstract class for a single step in a task.
     """
 
-    def __init__(self, stage_serial):
+    def __init__(self, stage_serial: int):
         self.stage_serial = stage_serial
 
     def run(self, client: AndroidClient):
@@ -264,6 +270,11 @@ class Stage:
 
     def get_serial(self):
         return self.stage_serial
+
+
+class CallbackWaitTimeoutException(Exception):
+    def __init__(self, stage_serial):
+        super().__init__(f"Wait too long on this callback. Stage:{stage_serial}")
 
 
 class ClientTask:
@@ -356,13 +367,18 @@ class PhoneLoginTask(LoginTask):
     Base abstract class for using phone verify-code to login on apps.
     """
 
-    def __init__(self, phone: str, verify_callback: Callable):
+    def __init__(self, phone: str, verify_callback: Callable[[], str]):
         """
         :param phone: User phone number
         :param verify_callback: A callback function, will be called after the phone verification code has been fired.
         """
         self.phone = phone
+        self.verify_callback = verify_callback
+        self.code = None
         super().__init__()
+
+    def code_callback(self, code: str):
+        self.code = code
 
 
 class DownloadMediaStage(Stage):
@@ -373,7 +389,7 @@ class DownloadMediaStage(Stage):
     def run(self, client: AndroidClient):
         client.restart_app('com.sec.android.app.sbrowser')
         client.wait_to_click({'resource-id': 'com.sec.android.app.sbrowser:id/location_bar_edit_text'})
-        print("self.urlself.urlself.urlself.url",self.url)
+        print("self.urlself.urlself.urlself.url", self.url)
         client.device.send_keys(self.url)
         client.device.send_action('go')
         time.sleep(5)
@@ -390,3 +406,28 @@ class DownloadMediaStage(Stage):
         client.wait_to_click({'text': '下载'})
         client.wait_to_click({'text': '下载'})
         client.wait_until_found({'text': '打开文件'}, timeout=600)
+
+
+class WaitCallBackStage(Stage):
+    def __init__(self, stage_serial: int, max_wait_time: float, callback: Callable[[], str], task: PhoneLoginTask):
+        self.max_wait_time = max_wait_time
+        self.callback = callback
+        self.task = task
+        self.res = None
+        super().__init__(stage_serial)
+
+    def get_code_wrapper(self):
+        self.task.code_callback(self.callback())
+
+    def run(self, client: AndroidClient):
+        t = threading.Thread(target=self.get_code_wrapper)
+        t.start()
+        current_wait_time = 0.0
+        while True:
+            if not t.is_alive():
+                break
+            else:
+                time.sleep(0.1)
+                current_wait_time += 0.1
+                if current_wait_time > self.max_wait_time:
+                    raise CallbackWaitTimeoutException(self.stage_serial)
