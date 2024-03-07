@@ -25,9 +25,10 @@ class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
         client.wait_to_click({'text': '视频'}, gap=1)
         client.wait_until_found({'text': '视频'})
-        area = BeautifulSoup(str(client.rs[0].next.next.next.next.next), 'xml')
-        elem = list(area.find_all(attrs={'class': 'android.widget.FrameLayout'})[3].children)[1]
-        client.click_xml_node(elem)
+        # area = BeautifulSoup(str(client.rs[0].next.next.next.next.next), 'xml')
+        # elem = list(area.find_all(attrs={'class': 'android.widget.FrameLayout'})[3].children)[1]
+        # client.click_xml_node(elem)
+        client.device.click(310,445)
         client.wait_to_click({'content-desc': '下一步'})
         client.wait_to_click({'text': '下一步'})
 

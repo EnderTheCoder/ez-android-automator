@@ -8,7 +8,7 @@
 """
 import queue
 import warnings
-import client
+import ez_android_automator.client as client
 import threading
 
 
