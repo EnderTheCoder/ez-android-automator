@@ -73,13 +73,16 @@ class BeforeLoginStage(Stage):
 
 
 class PhoneAuthCodeStage(Stage):
-    def __init__(self, serial, code):
+    def __init__(self, serial):
         super().__init__(serial)
-        self.code = code
+        self.code = None
 
     def run(self, client: AndroidClient):
         client.wait_to_click({'text': '输入验证码'})
         client.device.send_keys(self.code)
+
+    def code_callback(self, code: str):
+        self.code = code
 
 
 class XhsPublishVideoTask(PublishTask):
@@ -101,5 +104,6 @@ class XhsPhoneLoginTask(PhoneLoginTask):
         super().__init__(phone, callback)
         self.stages.append(OpenAppStage(0, True))
         self.stages.append(BeforeLoginStage(1, phone))
-        self.stages.append(WaitCallBackStage(2, 60, callback, self))
-        self.stages.append(PhoneAuthCodeStage(3, self.code))
+        auth_stage = PhoneAuthCodeStage(3)
+        self.stages.append(WaitCallBackStage(2, 60, callback, auth_stage.code_callback))
+        self.stages.append(auth_stage)

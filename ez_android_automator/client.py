@@ -377,8 +377,7 @@ class PhoneLoginTask(LoginTask):
         self.code = None
         super().__init__()
 
-    def code_callback(self, code: str):
-        self.code = code
+
 
 
 class DownloadMediaStage(Stage):
@@ -409,15 +408,16 @@ class DownloadMediaStage(Stage):
 
 
 class WaitCallBackStage(Stage):
-    def __init__(self, stage_serial: int, max_wait_time: float, callback: Callable[[], str], task: PhoneLoginTask):
+    def __init__(self, stage_serial: int, max_wait_time: float, callback: Callable[[], str],
+                 task_callback: Callable[[str], None]):
         self.max_wait_time = max_wait_time
         self.callback = callback
-        self.task = task
+        self.task_callback = task_callback
         self.res = None
         super().__init__(stage_serial)
 
     def get_code_wrapper(self):
-        self.task.code_callback(self.callback())
+        self.task_callback(self.callback())
 
     def run(self, client: AndroidClient):
         t = threading.Thread(target=self.get_code_wrapper)
