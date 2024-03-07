@@ -8,7 +8,7 @@
 """
 import uiautomator2
 from ez_android_automator.client import PublishClient
-from ez_android_automator.douyin_task1 import DouyinVideoPublishTask
+from ez_android_automator.douyin_task import DouyinVideoPublishTask
 
 client = PublishClient(uiautomator2.connect_usb())
 # print(client.dump_xml())
