@@ -356,9 +356,10 @@ class PhoneLoginTask(LoginTask):
     Base abstract class for using phone verify-code to login on apps.
     """
 
-    def __init__(self, phone: str):
+    def __init__(self, phone: str, verify_callback: Callable):
         """
         :param phone: User phone number
+        :param verify_callback: A callback function, will be called after the phone verification code has been fired.
         """
         self.phone = phone
         super().__init__()
