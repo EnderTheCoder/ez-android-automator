@@ -103,7 +103,6 @@ class AndroidClient:
     """
 
     def __init__(self, device: uiautomator2.Device):
-        self.exception_handler = None
         self.rs = None
         self.device = device
         self.xml = ''
@@ -207,9 +206,6 @@ class AndroidClient:
     def set_task(self, task):
         self.task = task
 
-    def set_exception_handler(self, handler: TaskExceptionHandler):
-        self.exception_handler = handler
-
     def drag(self, slider: (int, int, int, int), rail: (int, int, int, int)):
         self.device.drag((slider[0] + slider[1]) / 2,
                          (slider[2] + slider[3]) / 2,
@@ -286,6 +282,7 @@ class ClientTask:
         self.exception: Exception
         self.callback = None
         self.callback: TaskCallback
+        self.handler = None
 
     def run(self, client: AndroidClient):
         try:
@@ -294,8 +291,8 @@ class ClientTask:
                 stage.run(client)
         except Exception as e:
             self.exception = e
-            if client.exception_handler is not None:
-                client.exception_handler.handle(client, self)
+            if self.handler is not None:
+                self.handler.handle(client, self)
         self.finished = True
         if self.callback is not None:
             self.callback.run(self)
@@ -316,7 +313,16 @@ class ClientTask:
         self.stages.append(stage)
 
     def set_callback(self, callback: TaskCallback):
+        """
+        This method set callback for the task, it will be called when a task is finished successfully.
+        """
         self.callback = callback
+
+    def set_handler(self, handler: TaskExceptionHandler):
+        """
+        This method set callback for the task, it will be called when a task is interrupted by an exception.
+        """
+        self.handler = handler
 
 
 class PublishTask(ClientTask):
@@ -376,8 +382,6 @@ class PhoneLoginTask(LoginTask):
         self.verify_callback = verify_callback
         self.code = None
         super().__init__()
-
-
 
 
 class DownloadMediaStage(Stage):
