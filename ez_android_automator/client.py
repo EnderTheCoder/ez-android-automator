@@ -292,10 +292,10 @@ class ClientTask:
         except Exception as e:
             self.exception = e
             if self.handler is not None:
-                self.handler.handle(client, self)
+                self.handler(client, self)
         self.finished = True
         if self.callback is not None:
-            self.callback.run(self)
+            self.callback(self)
 
     def get_stage(self):
         return self.current_stage
@@ -312,13 +312,13 @@ class ClientTask:
     def append(self, stage: Stage):
         self.stages.append(stage)
 
-    def set_callback(self, callback: TaskCallback):
+    def set_callback(self, callback: callable):
         """
         This method set callback for the task, it will be called when a task is finished successfully.
         """
         self.callback = callback
 
-    def set_handler(self, handler: TaskExceptionHandler):
+    def set_handler(self, handler: callable):
         """
         This method set callback for the task, it will be called when a task is interrupted by an exception.
         """
