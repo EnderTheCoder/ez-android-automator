@@ -10,7 +10,7 @@ import time
 from typing import Callable
 
 from ez_android_automator.client import Stage, PublishTask, DownloadMediaStage, PublishClient, AndroidClient, \
-    PhoneLoginTask, WaitCallBackStage, PasswordLoginTask
+    PhoneLoginTask, WaitCallBackStage, PasswordLoginTask, ClientWaitTimeout
 
 
 class OpenAppStage(Stage):
@@ -91,9 +91,14 @@ class PasswordLoginStage(Stage):
         client.wait_to_click({'text': '我'})
         client.wait_to_click({'text': '密码登录'})
         client.device.send_keys(self.account)
-        client.wait_to_click({'text': '请先勾选，同意后再进行登录'})
-        client.wait_to_click({'text': '请输入密码'})
-        client.device.send_keys(self.password)
+        try:
+            client.wait_to_click({'text': '请先勾选，同意后再进行登录'})
+            client.wait_to_click({'text': '请输入密码'})
+            client.device.send_keys(self.password)
+        except ClientWaitTimeout as e:
+            client.wait_to_click({'text': '请输入密码'})
+            client.device.send_keys(self.password)
+            client.wait_to_click({'text': '同意'})
         client.wait_to_click({'text': '登录'})
 
 
