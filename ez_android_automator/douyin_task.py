@@ -8,7 +8,6 @@
 """
 import time
 from typing import Callable
-
 from ez_android_automator.client import Stage, PublishTask, DownloadMediaStage, PublishClient, AndroidClient, \
     PhoneLoginTask, WaitCallBackStage, PasswordLoginTask, ClientWaitTimeout
 
@@ -25,6 +24,7 @@ class OpenAppStage(Stage):
         client.device.shell('am start -n com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.main.MainActivity')
         if self.clear_data:
             client.wait_to_click({'text': '同意'})
+
 
 class PressPublishButtonStage(Stage):
     def run(self, client: PublishClient):
