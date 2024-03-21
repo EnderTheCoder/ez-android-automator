@@ -10,7 +10,7 @@ import time
 from typing import Callable
 
 from ez_android_automator.client import Stage, PublishTask, DownloadMediaStage, PublishClient, AndroidClient, \
-    PhoneLoginTask, WaitCallBackStage
+    PhoneLoginTask, WaitCallBackStage, PasswordLoginTask
 
 
 class OpenAppStage(Stage):
@@ -80,6 +80,23 @@ class PhoneAuthCodeStage(Stage):
         self.code = code
 
 
+class PasswordLoginStage(Stage):
+    def __init__(self, serial, account, password):
+        super().__init__(serial)
+        self.account = account
+        self.password = password
+
+    def run(self, client: AndroidClient):
+        client.wait_to_click({'text': '我'})
+        client.wait_to_click({'text': '密码登录'})
+        client.device.send_keys(self.account)
+        client.wait_to_click({'text': '请先勾选，同意后再进行登录'})
+        client.wait_to_click({'text': '请输入密码'})
+        client.device.send_keys(self.password)
+        client.wait_to_click({'text': '登录'})
+
+
+
 class DouyinVideoPublishTask(PublishTask):
     """
     Publish a video on Douyin.
@@ -102,3 +119,10 @@ class DouyinPhoneLoginTask(PhoneLoginTask):
         auth_stage = PhoneAuthCodeStage(3)
         self.stages.append(WaitCallBackStage(2, 60, callback, auth_stage.code_callback))
         self.stages.append(auth_stage)
+
+
+class DouyinPasswordLoginTask(PasswordLoginTask):
+    def __init__(self, account: str, password: str):
+        super().__init__(account, password)
+        self.stages.append(OpenAppStage(0, True))
+        self.stages.append(PasswordLoginStage(1, account, password))
