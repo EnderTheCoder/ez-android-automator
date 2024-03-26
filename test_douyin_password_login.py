@@ -9,6 +9,6 @@ def test_callback():
     return input('输入验证码')
 
 
-cli.set_task(DouyinPasswordLoginTask('13038005054', '990414', test_callback))
+cli.set_task(DouyinPasswordLoginTask('13038005054', 'zhf990414', test_callback))
 cli.run_current_task()
 # 账号密码登录需要验证码
