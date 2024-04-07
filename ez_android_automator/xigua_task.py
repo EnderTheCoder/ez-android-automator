@@ -108,7 +108,7 @@ class XiguaPublishVideoTask(PublishTask):
 
     def __init__(self, priority: int, title: str, content: str, video: str):
         super().__init__(priority, title, content, video, '')
-        # self.stages.append(DownloadMediaStage(0, video))
+        self.stages.append(DownloadMediaStage(0, video))
         self.stages.append(OpenAppStage(1))
         self.stages.append(PressPublishButtonStage(2))
         self.stages.append(ChooseFirstVideoStage(3))
