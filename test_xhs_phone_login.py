@@ -2,7 +2,6 @@ import uiautomator2
 
 from ez_android_automator.client import *
 from ez_android_automator.xhs_task import XhsPhoneLoginTask
-from ez_android_automator.douyin_task import DouyinPhoneLoginTask
 
 cli = PublishClient(uiautomator2.connect())
 
