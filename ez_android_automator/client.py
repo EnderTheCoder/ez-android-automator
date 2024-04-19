@@ -384,6 +384,23 @@ class PhoneLoginTask(LoginTask):
         super().__init__()
 
 
+class PullStage(Stage):
+    def __init__(self, serial, package_name: str, destination_path: str):
+        super().__init__(serial)
+        self.package_name = package_name
+        self.destination_path = destination_path
+
+    def run(self, client: AndroidClient):
+        client.device.shell()
+
+
+class PullDataTask(ClientTask):
+    def __init__(self, package_name: str, destination_path: str):
+        super().__init__()
+        self.package_name = package_name
+        self.stages.append(PullStage(0, package_name, destination_path))
+
+
 class DownloadMediaStage(Stage):
     def __init__(self, serial, url: str):
         super().__init__(serial)
