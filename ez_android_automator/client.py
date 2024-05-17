@@ -293,6 +293,8 @@ class ClientTask:
             self.exception = e
             if self.handler is not None:
                 self.handler(client, self)
+            else:
+                raise e
         self.finished = True
         if self.callback is not None:
             self.callback(self)
