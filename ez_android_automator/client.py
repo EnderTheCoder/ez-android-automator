@@ -293,6 +293,8 @@ class ClientTask:
             self.exception = e
             if self.handler is not None:
                 self.handler(client, self)
+            else:
+                raise e
         self.finished = True
         if self.callback is not None:
             self.callback(self)
@@ -373,15 +375,37 @@ class PhoneLoginTask(LoginTask):
     Base abstract class for using phone verify-code to login on apps.
     """
 
-    def __init__(self, phone: str, verify_callback: Callable[[], str]):
+    def __init__(self, phone: str):
         """
         :param phone: User phone number
-        :param verify_callback: A callback function, will be called after the phone verification code has been fired.
         """
         self.phone = phone
-        self.verify_callback = verify_callback
         self.code = None
         super().__init__()
+
+    def get_code(self) -> str:
+        return self.code
+
+    def send_captcha(self, captcha):
+        self.code = captcha
+        pass
+
+
+class PullStage(Stage):
+    def __init__(self, serial, package_name: str, destination_path: str):
+        super().__init__(serial)
+        self.package_name = package_name
+        self.destination_path = destination_path
+
+    def run(self, client: AndroidClient):
+        client.device.shell()
+
+
+class PullDataTask(ClientTask):
+    def __init__(self, package_name: str, destination_path: str):
+        super().__init__()
+        self.package_name = package_name
+        self.stages.append(PullStage(0, package_name, destination_path))
 
 
 class DownloadMediaStage(Stage):
@@ -419,9 +443,19 @@ class WaitCallBackStage(Stage):
         self.task_callback = task_callback
         self.res = None
         super().__init__(stage_serial)
+        self.signal_terminate = False
 
     def get_code_wrapper(self):
-        self.task_callback(self.callback())
+        c = None
+        while c is None:
+            c = self.callback()
+            time.sleep(0.05)
+            if self.signal_terminate:
+                return
+        self.task_callback(c)
+
+    def terminate(self):
+        self.signal_terminate = True
 
     def run(self, client: AndroidClient):
         t = threading.Thread(target=self.get_code_wrapper)
@@ -434,4 +468,5 @@ class WaitCallBackStage(Stage):
                 time.sleep(0.1)
                 current_wait_time += 0.1
                 if current_wait_time > self.max_wait_time:
+                    self.terminate()
                     raise CallbackWaitTimeoutException(self.stage_serial)

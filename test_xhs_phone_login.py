@@ -6,9 +6,7 @@ from ez_android_automator.xhs_task import XhsPhoneLoginTask
 cli = PublishClient(uiautomator2.connect())
 
 
-def test_callback():
-    return input('输入验证码')
-
-
-cli.set_task(XhsPhoneLoginTask(input('输入手机号'), test_callback))
+task = XhsPhoneLoginTask(input('输入手机号'))
+cli.set_task(task)
+task.send_captcha(input("输入验证码"))
 cli.run_current_task()
