@@ -8,11 +8,10 @@
 """
 
 import uiautomator2
-from ez_android_automator.client import PublishClient, TestHandler
+from ez_android_automator.client import PublishClient
 from ez_android_automator.kauishoujisu_task import KuaishoujisuPublishVideoTask
 
 client = PublishClient(uiautomator2.connect_usb())
-client.set_exception_handler(TestHandler())
 # print(client.device.app_list())
 print(client.dump_xml())
 exit()

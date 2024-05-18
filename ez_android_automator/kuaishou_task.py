@@ -6,13 +6,23 @@
 @IDE: PyCharm
 @Motto：one coin
 """
-
-from ez_android_automator.client import Stage, PublishTask, DownloadMediaStage, PublishClient
+import time
+from typing import Callable
+from ez_android_automator.client import Stage, PublishTask, DownloadMediaStage, PublishClient, AndroidClient, \
+    PhoneLoginTask, WaitCallBackStage, ClientWaitTimeout, PasswordLoginTask
 
 
 class OpenAppStage(Stage):
+    def __init__(self, serial, clear_data: bool = False):
+        self.clear_data = clear_data
+        super().__init__(serial)
+
     def run(self, client: PublishClient):
-        client.restart_app("com.smile.gifmaker")
+        client.restart_app("com.smile.gifmaker", self.clear_data)
+        if self.clear_data:
+            client.wait_to_click({'text': '不同意'})
+            time.sleep(1)
+            client.wait_to_click({'text': '同意并继续'})
 
 
 class PressPublishButtonStage(Stage):
@@ -43,6 +53,56 @@ class SetVideoOptionsStage(Stage):
         client.wait_to_click({'text': '发布'})
 
 
+class BeforeLoginStage(Stage):
+    def __init__(self, serial, phone: str):
+        super().__init__(serial)
+        self.phone = phone
+
+    def run(self, client: AndroidClient):
+        client.wait_to_click({'text': '我'})
+        client.wait_to_click({'text': '请输入手机号'})
+        client.device.send_keys(self.phone)
+        client.wait_to_click({'text': '获取验证码'})
+        try:
+            client.wait_to_click({'text': '同意'})
+        except ClientWaitTimeout as e:
+            pass
+
+
+class PhoneAuthCodeStage(Stage):
+    def __init__(self, serial):
+        super().__init__(serial)
+        self.code = None
+
+    def run(self, client: AndroidClient):
+        client.device.send_keys(self.code)
+        client.wait_to_click({'text': '登录'})
+        try:
+            client.wait_to_click({'text': '同意并登录'})
+        except ClientWaitTimeout as e:
+            pass
+
+    def code_callback(self, code: str):
+        self.code = code
+
+
+class PasswordLoginStage(Stage):
+    def __init__(self, serial, account, password):
+        super().__init__(serial)
+        self.account = account
+        self.password = password
+
+    def run(self, client: AndroidClient):
+        client.wait_to_click({'text': '我'})
+        client.wait_to_click({'text': '密码登录'})
+        client.device.send_keys(self.account)
+        client.wait_to_click({'text': '请输入密码'})
+        client.device.send_keys(self.password)
+        client.wait_to_click({'text': '登录'})
+        time.sleep(0.5)
+        client.wait_to_click({'text': '同意并登录'})
+
+
 class KuaishouPublishVideoTask(PublishTask):
     """
     Publish a video on Kuaishou.
@@ -55,3 +115,20 @@ class KuaishouPublishVideoTask(PublishTask):
         self.stages.append(PressPublishButtonStage(2))
         self.stages.append(ChooseFirstVideoStage(3))
         self.stages.append(SetVideoOptionsStage(4, self.content))
+
+
+class KuaishouPhoneLoginTask(PhoneLoginTask):
+    def __init__(self, phone: str, callback: Callable[[], str]):
+        super().__init__(phone, callback)
+        self.stages.append(OpenAppStage(0, True))
+        self.stages.append(BeforeLoginStage(1, phone))
+        auth_stage = PhoneAuthCodeStage(3)
+        self.stages.append(WaitCallBackStage(2, 60, callback, auth_stage.code_callback))
+        self.stages.append(auth_stage)
+
+
+class KuaishouPasswordLoginTask(PasswordLoginTask):
+    def __init__(self, account: str, password: str):
+        super().__init__(account, password)
+        self.stages.append(OpenAppStage(0, True))
+        self.stages.append(PasswordLoginStage(1, account, password))
