@@ -118,12 +118,12 @@ class KuaishouPublishVideoTask(PublishTask):
 
 
 class KuaishouPhoneLoginTask(PhoneLoginTask):
-    def __init__(self, phone: str, callback: Callable[[], str]):
-        super().__init__(phone, callback)
+    def __init__(self, phone: str):
+        super().__init__(phone)
         self.stages.append(OpenAppStage(0, True))
         self.stages.append(BeforeLoginStage(1, phone))
         auth_stage = PhoneAuthCodeStage(3)
-        self.stages.append(WaitCallBackStage(2, 60, callback, auth_stage.code_callback))
+        self.stages.append(WaitCallBackStage(2, 60, self.get_code, auth_stage.code_callback))
         self.stages.append(auth_stage)
 
 

@@ -7,9 +7,6 @@
 @Motto：The only one true Legendary Grandmaster.
 """
 import time
-from typing import Callable
-
-from bs4 import BeautifulSoup
 from ez_android_automator.client import PublishTask, Stage, PublishClient, DownloadMediaStage, PhoneLoginTask, \
     PasswordLoginTask, AndroidClient, WaitCallBackStage
 
