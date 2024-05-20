@@ -21,6 +21,5 @@ client = AndroidClient(uiautomator2.connect())
 client.set_task(UnicomInstallTask())
 client.run_current_task()
 client.set_task(UnicomSignTask('420922198707274630', '恒大绿洲二期23号楼1单元1702'))
-client.set_exception_handler(TestHandler())
 client.run_current_task()
 pass
