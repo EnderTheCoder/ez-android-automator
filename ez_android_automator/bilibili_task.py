@@ -95,10 +95,8 @@ class GetStatisticStage(Stage):
 class BilibiliStatisticTask(StatisticTask):
     def __init__(self, video_title):
         super().__init__()
-        self.statistic = None
         self.append(OpenAppStage(0))
         self.append(StatisticCenterStage(1))
         self.append(GetStatisticStage(2, video_title, self.statistic_callback))
 
-    def statistic_callback(self, statistic: dict):
-        self.statistic = statistic
+

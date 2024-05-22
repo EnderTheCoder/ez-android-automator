@@ -394,6 +394,10 @@ class PhoneLoginTask(LoginTask):
 class StatisticTask(ClientTask):
     def __init__(self):
         super().__init__()
+        self.statistic = None
+
+    def statistic_callback(self, statistic: dict):
+        self.statistic = statistic
 
 
 class PullStage(Stage):
