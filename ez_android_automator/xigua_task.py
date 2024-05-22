@@ -7,8 +7,6 @@
 @Motto：one coin
 """
 import time
-from typing import Callable
-
 from ez_android_automator.client import Stage, PublishTask, DownloadMediaStage, PublishClient, AndroidClient, \
     WaitCallBackStage, PhoneLoginTask, PasswordLoginTask
 

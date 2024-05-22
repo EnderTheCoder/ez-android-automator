@@ -1,12 +1,12 @@
 """
-@Time: 2024/5/14 19:00
+@Time: 2024/5/22 17:00
 @Auth: coin
 @Email: 918731093@qq.com
-@File: bilibili_task.py
+@File: weibo_task.py
 @IDE: PyCharm
 @Motto：one coin
 """
-import time
+
 from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, DownloadMediaStage, \
     PhoneLoginTask, WaitCallBackStage
 
@@ -17,7 +17,7 @@ class OpenAppStage(Stage):
         super().__init__(serial)
 
     def run(self, client: PublishClient):
-        client.restart_app("tv.danmaku.bili", self.clear_data)
+        client.restart_app("com.sina.weibo", self.clear_data)
         if self.clear_data:
             client.wait_to_click({'text': '同意并继续'})
 
@@ -28,8 +28,8 @@ class BeforeLoginStage(Stage):
         self.phone = phone
 
     def run(self, client: AndroidClient):
-        client.wait_to_click({"content-desc": "登录，按钮"})
-        client.wait_to_click({"text": "请输入手机号码"})
+        client.wait_to_click({"content-desc": "我"})
+        client.wait_to_click({"text": "手机号"})
         client.device.send_keys(self.phone)
         client.wait_to_click({"text": "获取验证码"})
 
@@ -42,6 +42,8 @@ class PhoneAuthCodeStage(Stage):
     def run(self, client: AndroidClient):
         client.device.send_keys(self.code)
         client.wait_to_click({"text": "同意并登录"})
+        client.wait_to_click({"text": "跳过"})
+        client.wait_to_click({"text": "跳过"})
 
     def code_callback(self, code: str):
         self.code = code
@@ -49,31 +51,35 @@ class PhoneAuthCodeStage(Stage):
 
 class PressPublishButtonStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({"content-desc": "发布内容,5之3,标签"}, gap=3)
+        client.wait_to_click({"resource-id": "com.sina.weibo:id/rlredpacketSave"})
+        client.wait_to_click({"text": "视频"})
 
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({'text': '视频'})
-        time.sleep(1)
-        client.device.click(160, 650)
-        client.wait_to_click({'text': '发布'})
+        client.device.click(495, 270)
+        client.wait_to_click({'text': '下一步(1)'})
+        client.wait_to_click({'text': '下一步'})
 
 
 class SetVideoOptionsStage(Stage):
-    def __init__(self, serial, content: str):
+    def __init__(self, serial, title: str, content: str):
         super().__init__(serial)
+        self.title = title
         self.content = content
 
     def run(self, client: PublishClient):
-        client.wait_to_click({"text": "合适的标题可以吸引更多人观看～"})
+        client.wait_to_click({"text": "分享新鲜事..."})
         client.device.send_keys(self.content)
-        client.wait_to_click({"text": "发布"})
+        client.wait_to_click({"text": "原创"})
+        client.wait_to_click({"text": "填写标题能获得更多关注"})
+        client.device.send_keys(self.title)
+        client.wait_to_click({"text": "发送"})
 
 
-class BilibiliPublishVideoTask(PublishTask):
+class WeiboPublishVideoTask(PublishTask):
     """
-    Publish a video on Bilibili.
+    Publish a video on Weibo.
     """
 
     def __init__(self, priority: int, title: str, content: str, video: str):
@@ -82,10 +88,10 @@ class BilibiliPublishVideoTask(PublishTask):
         self.stages.append(OpenAppStage(1))
         self.stages.append(PressPublishButtonStage(2))
         self.stages.append(ChooseFirstVideoStage(3))
-        self.stages.append(SetVideoOptionsStage(4, self.content))
+        self.stages.append(SetVideoOptionsStage(4, self.title, self.content))
 
 
-class BilibiliPhoneLoginTask(PhoneLoginTask):
+class WeiboPhoneLoginTask(PhoneLoginTask):
     def __init__(self, phone: str):
         super().__init__(phone)
         self.stages.append(OpenAppStage(0, True))
