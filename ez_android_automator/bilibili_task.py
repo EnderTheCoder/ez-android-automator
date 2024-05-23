@@ -7,8 +7,32 @@
 @Motto：one coin
 """
 import time
-from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, DownloadMediaStage, \
+from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, \
     PhoneLoginTask, WaitCallBackStage, StatisticTask
+
+
+class accountShStage(Stage):
+    def __init__(self, from_path: str, to_path: str):
+        self.from_path = from_path
+        self.to_path = to_path
+
+    def createSh(self, from_path: str):
+        file = open("adbSh.sh", "w")
+        commands = [
+            'su',
+            'cp -r ' + from_path + '/sdcard/adbAccountTest',
+            "chmod 777 - R /sdcard/adbAccountTest/app_account"
+        ]
+        # write commands to sh
+        for command in commands:
+            file.write(command + "\n")
+        file.close()
+
+    def run(self, client: AndroidClient):
+        self.createSh(self.from_path)
+        client.device.push("adbSh.sh", "/sdcard/adbAccountTest/adbSH")
+        client.device.shell('sh /sdcard/adbAccountTest/adbSH/adbSh.sh')
+        client.device.pull('/sdcard/adbAccountTest', self.to_path)
 
 
 class OpenAppStage(Stage):
@@ -148,3 +172,4 @@ class BilibiliPhoneLoginTask(PhoneLoginTask):
         auth_stage = PhoneAuthCodeStage(3)
         self.stages.append(WaitCallBackStage(2, 60, self.get_code, auth_stage.code_callback))
         self.stages.append(auth_stage)
+
