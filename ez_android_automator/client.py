@@ -203,6 +203,9 @@ class AndroidClient:
             failure_callback(self)
         self.task = None
 
+    def run_current_task_async(self, failure_callback: Callable = None):
+        threading.Thread(target=self.run_current_task, args=(failure_callback,)).start()
+
     def set_task(self, task):
         self.task = task
 
