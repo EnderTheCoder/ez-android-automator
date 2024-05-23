@@ -400,21 +400,10 @@ class StatisticTask(ClientTask):
         self.statistic = statistic
 
 
-class PullStage(Stage):
-    def __init__(self, serial, package_name: str, destination_path: str):
-        super().__init__(serial)
-        self.package_name = package_name
-        self.destination_path = destination_path
-
-    def run(self, client: AndroidClient):
-        client.device.shell()
-
-
 class PullDataTask(ClientTask):
-    def __init__(self, package_name: str, destination_path: str):
+    def __init__(self, package_name: str, from_path, to_path: str):
         super().__init__()
         self.package_name = package_name
-        self.stages.append(PullStage(0, package_name, destination_path))
 
 
 class WaitCallBackStage(Stage):
@@ -440,6 +429,7 @@ class WaitCallBackStage(Stage):
         self.signal_terminate = True
 
     def run(self, client: AndroidClient):
+
         t = threading.Thread(target=self.get_code_wrapper)
         t.start()
         current_wait_time = 0.0
