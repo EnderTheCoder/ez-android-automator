@@ -11,28 +11,38 @@ from ez_android_automator.client import Stage, PublishClient, AndroidClient, Pub
     PhoneLoginTask, WaitCallBackStage, StatisticTask
 
 
-class accountShStage(Stage):
-    def __init__(self, from_path: str, to_path: str):
+class getAccountStage(Stage):
+    def __init__(self, android_from_path: str, server_to_path: str, serial: int, sh_name: str):
+        super().__init__(serial)
+        self.android_from_path = android_from_path
+        self.server_to_path = server_to_path
+        self.sh_name = sh_name
+
+    def run(self, client: AndroidClient, android_from_path: str, server_to_path: str, sh_name: str):
+        client.device.shell('sh ' + android_from_path + '/adbSH/' + sh_name )
+        client.device.pull(android_from_path, self.server_to_path)
+
+
+class createShStage(Stage):
+    def __init__(self, from_packagename: str, from_path: str, serial: int, sh_name: str, to_path: str):
+        super().__init__(serial)
+        self.from_packagename = from_packagename
         self.from_path = from_path
         self.to_path = to_path
+        self.sh_name = sh_name
 
-    def createSh(self, from_path: str):
-        file = open("adbSh.sh", "w")
+    def run(self, client: AndroidClient):
+        file = open(self.sh_name, "w")
         commands = [
             'su',
-            'cp -r ' + from_path + '/sdcard/adbAccountTest',
-            "chmod 777 - R /sdcard/adbAccountTest/app_account"
+            'cp -r ' + self.from_packagename + '/' + self.from_path + ' ' + self.to_path,
+            "chmod 777 - R " + self.to_path + self.from_path
         ]
         # write commands to sh
         for command in commands:
             file.write(command + "\n")
         file.close()
-
-    def run(self, client: AndroidClient):
-        self.createSh(self.from_path)
-        client.device.push("adbSh.sh", "/sdcard/adbAccountTest/adbSH")
-        client.device.shell('sh /sdcard/adbAccountTest/adbSH/adbSh.sh')
-        client.device.pull('/sdcard/adbAccountTest', self.to_path)
+        client.device.push(self.sh_name, self.to_path + "/adbSH")
 
 
 class OpenAppStage(Stage):
@@ -173,3 +183,9 @@ class BilibiliPhoneLoginTask(PhoneLoginTask):
         self.stages.append(WaitCallBackStage(2, 60, self.get_code, auth_stage.code_callback))
         self.stages.append(auth_stage)
 
+
+class BilibiliAccountTask(PhoneLoginTask):
+    def __init__(self):
+        super().__init__()
+        self.stages.append(createShStage('/data/data/tv.danmaku.bili', '/app_account', 0, 'abdSh.sh', "/sdcard/adbAccountTest"))
+        self.stages.append(getAccountStage("/sdcard/adbAccountTest/app_account", '', 1, 'abdSh.sh'))
