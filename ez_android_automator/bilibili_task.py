@@ -184,7 +184,7 @@ class BilibiliPhoneLoginTask(PhoneLoginTask):
         self.stages.append(auth_stage)
 
 
-class BilibiliAccountTask(PullDataTask):
+class BilibiliGetAccountTask(PullDataTask):
     def __init__(self, from_package_name: str, from_path: str, sh_name: str, to_path: str, server_to_path: str):
         super().__init__(from_package_name, from_path, sh_name, to_path, server_to_path)
         self.stages.append(
