@@ -8,7 +8,7 @@
 """
 import time
 from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, \
-    PhoneLoginTask, WaitCallBackStage, StatisticTask
+    PhoneLoginTask, WaitCallBackStage, StatisticTask, PullDataTask
 
 
 class getAccountStage(Stage):
@@ -19,7 +19,7 @@ class getAccountStage(Stage):
         self.sh_name = sh_name
 
     def run(self, client: AndroidClient, android_from_path: str, server_to_path: str, sh_name: str):
-        client.device.shell('sh ' + android_from_path + '/adbSH/' + sh_name )
+        client.device.shell('sh ' + android_from_path + '/adbSH/' + sh_name)
         client.device.pull(android_from_path, self.server_to_path)
 
 
@@ -184,8 +184,9 @@ class BilibiliPhoneLoginTask(PhoneLoginTask):
         self.stages.append(auth_stage)
 
 
-class BilibiliAccountTask(PhoneLoginTask):
-    def __init__(self):
-        super().__init__()
-        self.stages.append(createShStage('/data/data/tv.danmaku.bili', '/app_account', 0, 'abdSh.sh', "/sdcard/adbAccountTest"))
-        self.stages.append(getAccountStage("/sdcard/adbAccountTest/app_account", '', 1, 'abdSh.sh'))
+class BilibiliAccountTask(PullDataTask):
+    def __init__(self, from_package_name: str, from_path: str, sh_name: str, to_path: str, server_to_path: str):
+        super().__init__(from_package_name, from_path, sh_name, to_path, server_to_path)
+        self.stages.append(
+            createShStage(from_package_name, from_path, 0, sh_name, to_path))
+        self.stages.append(getAccountStage(to_path + from_path, server_to_path, 1, sh_name))
