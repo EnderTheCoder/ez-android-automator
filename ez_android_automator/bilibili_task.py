@@ -11,38 +11,45 @@ from ez_android_automator.client import Stage, PublishClient, AndroidClient, Pub
     PhoneLoginTask, WaitCallBackStage, StatisticTask, PullDataTask
 
 
-class getAccountStage(Stage):
+class GetAccountStage(Stage):
     def __init__(self, android_from_path: str, server_to_path: str, serial: int, sh_name: str):
         super().__init__(serial)
         self.android_from_path = android_from_path
         self.server_to_path = server_to_path
         self.sh_name = sh_name
 
-    def run(self, client: AndroidClient, android_from_path: str, server_to_path: str, sh_name: str):
-        client.device.shell('sh ' + android_from_path + '/adbSH/' + sh_name)
-        client.device.pull(android_from_path, self.server_to_path)
+    def run(self, client: AndroidClient):
+        client.device.shell('sh ' + self.android_from_path + '/adbSH/' + self.sh_name)
+        client.device.pull(self.android_from_path + '/adbSH/' + self.sh_name, self.server_to_path)
+        # client.device.pull(self.android_from_path + '.tar.gz', self.server_to_path)
 
 
-class createShStage(Stage):
-    def __init__(self, from_packagename: str, from_path: str, serial: int, sh_name: str, to_path: str):
+class CreateShStage(Stage):
+    def __init__(self, from_packagename: str, from_path: str, serial: int, sh_name: str, to_path: str, tar_name: str):
         super().__init__(serial)
         self.from_packagename = from_packagename
         self.from_path = from_path
         self.to_path = to_path
         self.sh_name = sh_name
+        self.tar_name = tar_name
 
     def run(self, client: AndroidClient):
         file = open(self.sh_name, "w")
         commands = [
+            'mkdir ' + self.to_path + self.from_path,
             'su',
-            'cp -r ' + self.from_packagename + '/' + self.from_path + ' ' + self.to_path,
-            "chmod 777 - R " + self.to_path + self.from_path
+            'cp -r ' + self.from_packagename + self.from_path + ' ' + self.to_path,
+            "chmod 777 -R " + self.to_path + self.from_path,
+            'cd ' + self.to_path,
+            'tar -zcvf ' + self.to_path + "/" + self.tar_name + ' ' + self.to_path
         ]
+        i = 0
         # write commands to sh
         for command in commands:
-            file.write(command + "\n")
+
+            file.write(command + ' \n')
         file.close()
-        client.device.push(self.sh_name, self.to_path + "/adbSH")
+        client.device.push(self.sh_name, self.to_path + "/adbSH/")
 
 
 class OpenAppStage(Stage):
@@ -185,8 +192,10 @@ class BilibiliPhoneLoginTask(PhoneLoginTask):
 
 
 class BilibiliGetAccountTask(PullDataTask):
-    def __init__(self, from_package_name: str, from_path: str, sh_name: str, to_path: str, server_to_path: str):
-        super().__init__(from_package_name, from_path, sh_name, to_path, server_to_path)
+    def __init__(self, from_package_name: str, from_path: str, sh_name: str, to_path: str, server_to_path: str,
+                 tar_name: str):
+        super().__init__(from_package_name, from_path, sh_name, to_path, server_to_path, tar_name)
         self.stages.append(
-            createShStage(from_package_name, from_path, 0, sh_name, to_path))
-        self.stages.append(getAccountStage(to_path + from_path, server_to_path, 1, sh_name))
+            CreateShStage(from_package_name, from_path, 0, sh_name, to_path, tar_name))
+        # self.stages.append(GetAccountStage(to_path + from_path, server_to_path, 1, sh_name))
+        self.stages.append(GetAccountStage("/sdcard/adbAccountTest", server_to_path, 1, sh_name))
