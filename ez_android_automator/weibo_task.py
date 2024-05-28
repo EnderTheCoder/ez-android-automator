@@ -6,8 +6,9 @@
 @IDE: PyCharm
 @Motto：one coin
 """
+import time
 
-from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, DownloadMediaStage, \
+from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, \
     PhoneLoginTask, WaitCallBackStage
 
 
@@ -42,8 +43,7 @@ class PhoneAuthCodeStage(Stage):
     def run(self, client: AndroidClient):
         client.device.send_keys(self.code)
         client.wait_to_click({"text": "同意并登录"})
-        client.wait_to_click({"text": "跳过"})
-        client.wait_to_click({"text": "跳过"})
+        client.wait_to_click({"NAF": "true"})
 
     def code_callback(self, code: str):
         self.code = code
@@ -51,15 +51,17 @@ class PhoneAuthCodeStage(Stage):
 
 class PressPublishButtonStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({"resource-id": "com.sina.weibo:id/rlredpacketSave"})
+        client.wait_to_click({"resource-id": "com.sina.weibo:id/home_bar_right_tv1"})
         client.wait_to_click({"text": "视频"})
 
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
+        time.sleep(1)
         client.device.click(495, 270)
         client.wait_to_click({'text': '下一步(1)'})
         client.wait_to_click({'text': '下一步'})
+        client.wait_to_click({'text': '确定'})
 
 
 class SetVideoOptionsStage(Stage):
