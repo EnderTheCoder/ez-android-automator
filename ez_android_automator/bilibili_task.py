@@ -4,51 +4,69 @@
 @Email: 918731093@qq.com
 @File: bilibili_task.py
 @IDE: PyCharm
-@Mottoï¼šone coin
+@Motto£ºone coin
 """
+import os
 import time
 from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, \
     PhoneLoginTask, WaitCallBackStage, StatisticTask, PullDataTask
 
 
 class GetAccountStage(Stage):
-    def __init__(self, android_from_path: str, server_to_path: str, serial: int, sh_name: str):
+    def __init__(self, from_path: str, to_path: str, server_to_path: str, serial: int, sh_name: str, tar_name: str):
         super().__init__(serial)
-        self.android_from_path = android_from_path
+        self.from_path = from_path
+        self.to_path = to_path
         self.server_to_path = server_to_path
         self.sh_name = sh_name
+        self.tar_name = tar_name
 
     def run(self, client: AndroidClient):
-        client.device.shell('sh ' + self.android_from_path + '/adbSH/' + self.sh_name)
-        client.device.pull(self.android_from_path + '/adbSH/' + self.sh_name, self.server_to_path)
-        # client.device.pull(self.android_from_path + '.tar.gz', self.server_to_path)
+        client.device.shell('sh ' + self.to_path + '/adbSH/' + self.sh_name)
+
+        # Ö¸¶¨ÒªÀ­È¡µÄÎÄ¼şÂ·¾¶ºÍ±£´æµ½±¾µØµÄÄ¿Â¼Â·¾¶
+        source_path = self.to_path + '/' + self.tar_name
+        destination_path = self.server_to_path
+        print(source_path)
+        print(destination_path)
+
+
+        # source_path = "/sdcard/adbAccountTest/app_account.tar.gz"
+        # destination_path = "AccountData"
+
+        # adb_pull_command = "D:/path/to/adb.exe pull" + source_path + " " + destination_path
+        # os.system(adb_pull_command)
+        client.device.pull(self.to_path + '/' + self.tar_name, 'D:\programMedia\ez-android-automator\AccountData')#self.server_to_path
 
 
 class CreateShStage(Stage):
     def __init__(self, from_packagename: str, from_path: str, serial: int, sh_name: str, to_path: str, tar_name: str):
         super().__init__(serial)
+        self.sh_name = sh_name
         self.from_packagename = from_packagename
         self.from_path = from_path
         self.to_path = to_path
-        self.sh_name = sh_name
         self.tar_name = tar_name
 
     def run(self, client: AndroidClient):
-        file = open(self.sh_name, "w")
+        # ¹¹½¨ÃüÁîÁĞ±í
         commands = [
-            'mkdir ' + self.to_path + self.from_path,
+            f'mkdir -p {self.to_path}{self.from_path}',
             'su',
-            'cp -r ' + self.from_packagename + self.from_path + ' ' + self.to_path,
-            "chmod 777 -R " + self.to_path + self.from_path,
-            'cd ' + self.to_path,
-            'tar -zcvf ' + self.to_path + "/" + self.tar_name + ' ' + self.to_path
+            f'cp -r {self.from_packagename}{self.from_path} {self.to_path}',
+            f'chmod 777 -R {self.to_path}{self.from_path}',
+            f'cd {self.to_path}',
+            f'tar -zcvf {self.to_path}/{self.tar_name} {self.to_path}',
+            f'chmod 777 -R {self.to_path}/{self.tar_name}',
         ]
-        i = 0
-        # write commands to sh
-        for command in commands:
 
-            file.write(command + ' \n')
-        file.close()
+        # ½«ÃüÁîÁ¬½ÓÎªµ¥¸ö×Ö·û´®£¬²¢È·±£Ê¹ÓÃ Unix »»ĞĞ·û
+        script_content = "#!/bin/bash\n\n" + "\n".join(commands) + "\n"
+        # ´ò¿ªÎÄ¼ş²¢Ğ´ÈëÃüÁî£¬Ã÷È·Ê¹ÓÃ Unix »»ĞĞ·û
+        with open(self.sh_name, "w", newline='\n', encoding='utf-8') as file:
+            file.write(script_content)
+        # for command in commands:
+        #     file.write(command + '\n')
         client.device.push(self.sh_name, self.to_path + "/adbSH/")
 
 
@@ -60,7 +78,7 @@ class OpenAppStage(Stage):
     def run(self, client: PublishClient):
         client.restart_app("tv.danmaku.bili", self.clear_data)
         if self.clear_data:
-            client.wait_to_click({'text': 'åŒæ„å¹¶ç»§ç»­'})
+            client.wait_to_click({'text': 'Í¬Òâ²¢¼ÌĞø'})
 
 
 class BeforeLoginStage(Stage):
@@ -69,10 +87,10 @@ class BeforeLoginStage(Stage):
         self.phone = phone
 
     def run(self, client: AndroidClient):
-        client.wait_to_click({"content-desc": "ç™»å½•ï¼ŒæŒ‰é’®"})
-        client.wait_to_click({"text": "è¯·è¾“å…¥æ‰‹æœºå·ç "})
+        client.wait_to_click({"content-desc": "µÇÂ¼£¬°´Å¥"})
+        client.wait_to_click({"text": "ÇëÊäÈëÊÖ»úºÅÂë"})
         client.device.send_keys(self.phone)
-        client.wait_to_click({"text": "è·å–éªŒè¯ç "})
+        client.wait_to_click({"text": "»ñÈ¡ÑéÖ¤Âë"})
 
 
 class PhoneAuthCodeStage(Stage):
@@ -82,7 +100,7 @@ class PhoneAuthCodeStage(Stage):
 
     def run(self, client: AndroidClient):
         client.device.send_keys(self.code)
-        client.wait_to_click({"text": "åŒæ„å¹¶ç™»å½•"})
+        client.wait_to_click({"text": "Í¬Òâ²¢µÇÂ¼"})
 
     def code_callback(self, code: str):
         self.code = code
@@ -90,15 +108,15 @@ class PhoneAuthCodeStage(Stage):
 
 class PressPublishButtonStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({"content-desc": "å‘å¸ƒå†…å®¹,5ä¹‹3,æ ‡ç­¾"}, gap=3)
+        client.wait_to_click({"content-desc": "·¢²¼ÄÚÈİ,5Ö®3,±êÇ©"}, gap=3)
 
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({'text': 'è§†é¢‘'})
+        client.wait_to_click({'text': 'ÊÓÆµ'})
         time.sleep(1)
         client.device.click(160, 650)
-        client.wait_to_click({'text': 'å‘å¸ƒ'})
+        client.wait_to_click({'text': '·¢²¼'})
 
 
 class SetVideoOptionsStage(Stage):
@@ -107,16 +125,16 @@ class SetVideoOptionsStage(Stage):
         self.content = content
 
     def run(self, client: PublishClient):
-        client.wait_to_click({"text": "åˆé€‚çš„æ ‡é¢˜å¯ä»¥å¸å¼•æ›´å¤šäººè§‚çœ‹ï½"})
+        client.wait_to_click({"text": "ºÏÊÊµÄ±êÌâ¿ÉÒÔÎüÒı¸ü¶àÈË¹Û¿´¡«"})
         client.device.send_keys(self.content)
-        client.wait_to_click({"text": "å‘å¸ƒ"})
+        client.wait_to_click({"text": "·¢²¼"})
 
 
 class StatisticCenterStage(Stage):
     def run(self, client: AndroidClient):
         time.sleep(7)  # wait for ad to be finished
-        client.wait_to_click({'text': 'æˆ‘çš„'})
-        client.wait_to_click({'text': 'ç¨¿ä»¶ç®¡ç†'})
+        client.wait_to_click({'text': 'ÎÒµÄ'})
+        client.wait_to_click({'text': '¸å¼ş¹ÜÀí'})
 
 
 class GetStatisticStage(Stage):
@@ -126,15 +144,15 @@ class GetStatisticStage(Stage):
         self.statistic_callback = statistic_callback
 
     def run(self, client: AndroidClient):
-        client.wait_until_found({'text': 'æ•°æ®'})  # wait for list to be loaded
+        client.wait_until_found({'text': 'Êı¾İ'})  # wait for list to be loaded
         client.wait_until_found({'text': self.video_title})
         parser = client.find_xml_by_attr({'text': self.video_title})
         parser = parser[0]
         parent = parser.parent.parent.parent
         last = parent.contents[-2]
-        statistic_btn = last.find('node', {'text': 'æ•°æ®'})
+        statistic_btn = last.find('node', {'text': 'Êı¾İ'})
         client.click_xml_node(statistic_btn)
-        client.wait_until_found({'text': 'æ’­æ”¾é‡'})
+        client.wait_until_found({'text': '²¥·ÅÁ¿'})
         time.sleep(2)
         client.refresh_xml()
 
@@ -144,12 +162,12 @@ class GetStatisticStage(Stage):
             return int(data_node['text'])
 
         statistic = {
-            'view': get_statistic_by_attr_name('æ’­æ”¾é‡'),
-            'like': get_statistic_by_attr_name('ç‚¹èµ'),
-            'comment': get_statistic_by_attr_name('è¯„è®º'),
-            'collect': get_statistic_by_attr_name('æ”¶è—'),
-            'coin': get_statistic_by_attr_name('æŠ•å¸'),
-            'share': get_statistic_by_attr_name('åˆ†äº«')
+            'view': get_statistic_by_attr_name('²¥·ÅÁ¿'),
+            'like': get_statistic_by_attr_name('µãÔŞ'),
+            'comment': get_statistic_by_attr_name('ÆÀÂÛ'),
+            'collect': get_statistic_by_attr_name('ÊÕ²Ø'),
+            'coin': get_statistic_by_attr_name('Í¶±Ò'),
+            'share': get_statistic_by_attr_name('·ÖÏí')
         }
         self.statistic_callback(statistic)
         pass
@@ -198,4 +216,4 @@ class BilibiliGetAccountTask(PullDataTask):
         self.stages.append(
             CreateShStage(from_package_name, from_path, 0, sh_name, to_path, tar_name))
         # self.stages.append(GetAccountStage(to_path + from_path, server_to_path, 1, sh_name))
-        self.stages.append(GetAccountStage("/sdcard/adbAccountTest", server_to_path, 1, sh_name))
+        self.stages.append(GetAccountStage(from_path, to_path, server_to_path, 1, sh_name, tar_name))
