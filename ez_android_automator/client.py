@@ -451,3 +451,9 @@ class StatisticFetcher(ClientTask):
     def __init__(self):
         super().__init__()
         pass
+
+
+class TaskAsStage(Stage):
+    def __init__(self, stage_serial: int):
+        super().__init__(stage_serial)
+
