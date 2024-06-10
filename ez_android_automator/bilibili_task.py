@@ -4,7 +4,7 @@
 @Email: 918731093@qq.com
 @File: bilibili_task.py
 @IDE: PyCharm
-@Motto£ºone coin
+@Mottoï¼šone coin
 """
 import os
 import time
@@ -24,19 +24,22 @@ class GetAccountStage(Stage):
     def run(self, client: AndroidClient):
         client.device.shell('sh ' + self.to_path + '/adbSH/' + self.sh_name)
 
-        # Ö¸¶¨ÒªÀ­È¡µÄÎÄ¼şÂ·¾¶ºÍ±£´æµ½±¾µØµÄÄ¿Â¼Â·¾¶
+        # æŒ‡å®šè¦æ‹‰å–çš„æ–‡ä»¶è·¯å¾„å’Œä¿å­˜åˆ°æœ¬åœ°çš„ç›®å½•è·¯å¾„
         source_path = self.to_path + '/' + self.tar_name
         destination_path = self.server_to_path
         print(source_path)
         print(destination_path)
-
 
         # source_path = "/sdcard/adbAccountTest/app_account.tar.gz"
         # destination_path = "AccountData"
 
         # adb_pull_command = "D:/path/to/adb.exe pull" + source_path + " " + destination_path
         # os.system(adb_pull_command)
-        client.device.pull(self.to_path + '/' + self.tar_name, 'D:\programMedia\ez-android-automator\AccountData')#self.server_to_path
+        client.device.pull(self.to_path + '/' + self.tar_name,
+                           'D:\\programMedia\\ez-android-automator\\AccountData')  # self.server_to_path
+        # æ„é€  adb pull å‘½ä»¤å¹¶æ‰§è¡Œ
+        # adb_pull_command = f"adb pull {source_path} {destination_path}"
+        # os.system(adb_pull_command)
 
 
 class CreateShStage(Stage):
@@ -49,7 +52,7 @@ class CreateShStage(Stage):
         self.tar_name = tar_name
 
     def run(self, client: AndroidClient):
-        # ¹¹½¨ÃüÁîÁĞ±í
+        # æ„å»ºå‘½ä»¤åˆ—è¡¨
         commands = [
             f'mkdir -p {self.to_path}{self.from_path}',
             'su',
@@ -60,9 +63,9 @@ class CreateShStage(Stage):
             f'chmod 777 -R {self.to_path}/{self.tar_name}',
         ]
 
-        # ½«ÃüÁîÁ¬½ÓÎªµ¥¸ö×Ö·û´®£¬²¢È·±£Ê¹ÓÃ Unix »»ĞĞ·û
+        # å°†å‘½ä»¤è¿æ¥ä¸ºå•ä¸ªå­—ç¬¦ä¸²ï¼Œå¹¶ç¡®ä¿ä½¿ç”¨ Unix æ¢è¡Œç¬¦
         script_content = "#!/bin/bash\n\n" + "\n".join(commands) + "\n"
-        # ´ò¿ªÎÄ¼ş²¢Ğ´ÈëÃüÁî£¬Ã÷È·Ê¹ÓÃ Unix »»ĞĞ·û
+        # æ‰“å¼€æ–‡ä»¶å¹¶å†™å…¥å‘½ä»¤ï¼Œæ˜ç¡®ä½¿ç”¨ Unix æ¢è¡Œç¬¦
         with open(self.sh_name, "w", newline='\n', encoding='utf-8') as file:
             file.write(script_content)
         # for command in commands:
@@ -78,7 +81,7 @@ class OpenAppStage(Stage):
     def run(self, client: PublishClient):
         client.restart_app("tv.danmaku.bili", self.clear_data)
         if self.clear_data:
-            client.wait_to_click({'text': 'Í¬Òâ²¢¼ÌĞø'})
+            client.wait_to_click({'text': 'åŒæ„å¹¶ç»§ç»­'})
 
 
 class BeforeLoginStage(Stage):
@@ -87,10 +90,10 @@ class BeforeLoginStage(Stage):
         self.phone = phone
 
     def run(self, client: AndroidClient):
-        client.wait_to_click({"content-desc": "µÇÂ¼£¬°´Å¥"})
-        client.wait_to_click({"text": "ÇëÊäÈëÊÖ»úºÅÂë"})
+        client.wait_to_click({"content-desc": "ç™»å½•ï¼ŒæŒ‰é’®"})
+        client.wait_to_click({"text": "è¯·è¾“å…¥æ‰‹æœºå·ç "})
         client.device.send_keys(self.phone)
-        client.wait_to_click({"text": "»ñÈ¡ÑéÖ¤Âë"})
+        client.wait_to_click({"text": "è·å–éªŒè¯ç "})
 
 
 class PhoneAuthCodeStage(Stage):
@@ -100,7 +103,7 @@ class PhoneAuthCodeStage(Stage):
 
     def run(self, client: AndroidClient):
         client.device.send_keys(self.code)
-        client.wait_to_click({"text": "Í¬Òâ²¢µÇÂ¼"})
+        client.wait_to_click({"text": "åŒæ„å¹¶ç™»å½•"})
 
     def code_callback(self, code: str):
         self.code = code
@@ -108,15 +111,15 @@ class PhoneAuthCodeStage(Stage):
 
 class PressPublishButtonStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({"content-desc": "·¢²¼ÄÚÈİ,5Ö®3,±êÇ©"}, gap=3)
+        client.wait_to_click({"content-desc": "å‘å¸ƒå†…å®¹,5ä¹‹3,æ ‡ç­¾"}, gap=3)
 
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({'text': 'ÊÓÆµ'})
+        client.wait_to_click({'text': 'è§†é¢‘'})
         time.sleep(1)
         client.device.click(160, 650)
-        client.wait_to_click({'text': '·¢²¼'})
+        client.wait_to_click({'text': 'å‘å¸ƒ'})
 
 
 class SetVideoOptionsStage(Stage):
@@ -125,16 +128,16 @@ class SetVideoOptionsStage(Stage):
         self.content = content
 
     def run(self, client: PublishClient):
-        client.wait_to_click({"text": "ºÏÊÊµÄ±êÌâ¿ÉÒÔÎüÒı¸ü¶àÈË¹Û¿´¡«"})
+        client.wait_to_click({"text": "åˆé€‚çš„æ ‡é¢˜å¯ä»¥å¸å¼•æ›´å¤šäººè§‚çœ‹ï½"})
         client.device.send_keys(self.content)
-        client.wait_to_click({"text": "·¢²¼"})
+        client.wait_to_click({"text": "å‘å¸ƒ"})
 
 
 class StatisticCenterStage(Stage):
     def run(self, client: AndroidClient):
         time.sleep(7)  # wait for ad to be finished
-        client.wait_to_click({'text': 'ÎÒµÄ'})
-        client.wait_to_click({'text': '¸å¼ş¹ÜÀí'})
+        client.wait_to_click({'text': 'æˆ‘çš„'})
+        client.wait_to_click({'text': 'ç¨¿ä»¶ç®¡ç†'})
 
 
 class GetStatisticStage(Stage):
@@ -144,15 +147,15 @@ class GetStatisticStage(Stage):
         self.statistic_callback = statistic_callback
 
     def run(self, client: AndroidClient):
-        client.wait_until_found({'text': 'Êı¾İ'})  # wait for list to be loaded
+        client.wait_until_found({'text': 'æ•°æ®'})  # wait for list to be loaded
         client.wait_until_found({'text': self.video_title})
         parser = client.find_xml_by_attr({'text': self.video_title})
         parser = parser[0]
         parent = parser.parent.parent.parent
         last = parent.contents[-2]
-        statistic_btn = last.find('node', {'text': 'Êı¾İ'})
+        statistic_btn = last.find('node', {'text': 'æ•°æ®'})
         client.click_xml_node(statistic_btn)
-        client.wait_until_found({'text': '²¥·ÅÁ¿'})
+        client.wait_until_found({'text': 'æ’­æ”¾é‡'})
         time.sleep(2)
         client.refresh_xml()
 
@@ -162,12 +165,12 @@ class GetStatisticStage(Stage):
             return int(data_node['text'])
 
         statistic = {
-            'view': get_statistic_by_attr_name('²¥·ÅÁ¿'),
-            'like': get_statistic_by_attr_name('µãÔŞ'),
-            'comment': get_statistic_by_attr_name('ÆÀÂÛ'),
-            'collect': get_statistic_by_attr_name('ÊÕ²Ø'),
-            'coin': get_statistic_by_attr_name('Í¶±Ò'),
-            'share': get_statistic_by_attr_name('·ÖÏí')
+            'view': get_statistic_by_attr_name('æ’­æ”¾é‡'),
+            'like': get_statistic_by_attr_name('ç‚¹èµ'),
+            'comment': get_statistic_by_attr_name('è¯„è®º'),
+            'collect': get_statistic_by_attr_name('æ”¶è—'),
+            'coin': get_statistic_by_attr_name('æŠ•å¸'),
+            'share': get_statistic_by_attr_name('åˆ†äº«')
         }
         self.statistic_callback(statistic)
         pass
