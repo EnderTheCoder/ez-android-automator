@@ -404,9 +404,14 @@ class StatisticTask(ClientTask):
 
 
 class PullDataTask(ClientTask):
-    def __init__(self, package_name: str, from_path, to_path: str):
+    def __init__(self, from_package_name: str, from_path: str, sh_name: str, to_path: str, server_to_path: str, tar_name:str):
         super().__init__()
-        self.package_name = package_name
+        self.from_package_name = from_package_name
+        self.from_path = from_path
+        self.sh_name = sh_name
+        self.to_path = to_path
+        self.server_to_path = server_to_path
+        self.tar_name = tar_name
 
 
 class WaitCallBackStage(Stage):
