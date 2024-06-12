@@ -333,6 +333,12 @@ class ClientTask:
         """
         self.handler = handler
 
+    def shift_down_priority(self):
+        self.current_stage = -1
+        self.exception = None
+        self.finished = False
+        self.priority += 1
+
 
 class PublishTask(ClientTask):
     """
@@ -345,12 +351,6 @@ class PublishTask(ClientTask):
         self.content = content
         self.video = video
         self.photo = photo
-
-    def shift_down_priority(self):
-        self.current_stage = -1
-        self.exception = None
-        self.finished = False
-        self.priority += 1
 
 
 class LoginTask(ClientTask):
