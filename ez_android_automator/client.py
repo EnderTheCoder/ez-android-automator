@@ -459,6 +459,9 @@ class StatisticFetcher(ClientTask):
 
 
 class TaskAsStage(Stage):
+    """
+    Use task as a stage. With this, you can combine tasks dependent on each others together.
+    """
     def __init__(self, stage_serial: int, task: ClientTask):
         super().__init__(stage_serial)
         self.task = task
