@@ -39,7 +39,7 @@ class Manager:
                 for _client in self.clients.values():
                     if _client.is_usable():
                         task = self.tasks.get()
-                        _client.set_task(task)
+                        _client.set_task(task[1])
 
                         def failure_callback(__client: client.AndroidClient):
                             __client.task.shift_down_priority()
