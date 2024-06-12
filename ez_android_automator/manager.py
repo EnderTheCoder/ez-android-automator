@@ -46,7 +46,7 @@ class Manager:
                             if __client.task.priority > self.max_priority:
                                 self.push_task(__client.task)
 
-                        threading.Thread(target=_client.run_current_task, args=(_client, failure_callback)).start()
+                        threading.Thread(target=_client.run_current_task, args=(failure_callback,)).start()
                     else:
                         self.idle_task()
                         pass
