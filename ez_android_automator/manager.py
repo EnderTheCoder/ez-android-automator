@@ -52,7 +52,7 @@ class Manager:
                         pass
 
     def start(self):
-        threading.Thread(target=self.run, args=(self,)).start()
+        threading.Thread(target=self.run).start()
 
     def maintain_clients(self):
         """
