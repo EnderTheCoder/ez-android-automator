@@ -61,7 +61,7 @@ class Manager:
         :return: None
         """
         for serial in self.clients.keys():
-            if not self.clients[serial].alive():
+            if not self.clients[serial].alive:
                 warnings.warn(f'Client {serial} disconnected.')
                 del self.clients[serial]
 
