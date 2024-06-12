@@ -7,8 +7,9 @@
 @Motto：one coin
 """
 import time
-from ez_android_automator.client import Stage, PublishTask, DownloadMediaStage, PublishClient, AndroidClient, \
-    WaitCallBackStage, PhoneLoginTask, PasswordLoginTask
+from ez_android_automator.client import Stage, PublishTask, PublishClient, AndroidClient, \
+    WaitCallBackStage, PhoneLoginTask, PasswordLoginTask, TaskAsStage
+from ez_android_automator.idm_task import IDMPullTask
 
 
 class OpenAppStage(Stage):
@@ -106,7 +107,8 @@ class XiguaPublishVideoTask(PublishTask):
 
     def __init__(self, priority: int, title: str, content: str, video: str):
         super().__init__(priority, title, content, video, '')
-        self.stages.append(DownloadMediaStage(0, video))
+        task = IDMPullTask(video)
+        self.stages.append(TaskAsStage(0, task))
         self.stages.append(OpenAppStage(1))
         self.stages.append(PressPublishButtonStage(2))
         self.stages.append(ChooseFirstVideoStage(3))
