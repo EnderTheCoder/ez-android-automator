@@ -49,7 +49,7 @@ def parse_coordinates(bounds: str):
     return x1, x2, y1, y2
 
 
-class ClientWaitTimeout(Exception):
+class ClientWaitTimeout(TimeoutError):
     def __init__(self):
         super().__init__("Client wait too long to do detection on this task.")
 
@@ -271,7 +271,7 @@ class Stage:
         return self.stage_serial
 
 
-class CallbackWaitTimeoutException(Exception):
+class CallbackWaitTimeoutException(TimeoutError):
     def __init__(self, stage_serial):
         super().__init__(f"Wait too long on this callback. Stage:{stage_serial}")
 

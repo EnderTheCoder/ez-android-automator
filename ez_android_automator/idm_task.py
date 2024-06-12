@@ -1,4 +1,4 @@
-from .client import PublishClient, ClientTask, Stage, AndroidClient
+from .client import PublishClient, ClientTask, Stage, AndroidClient, CallbackWaitTimeoutException, ClientWaitTimeout
 
 
 class OpenAppStage(Stage):
@@ -18,6 +18,10 @@ class InputStage(Stage):
         client.device.send_keys(self.url)
         client.wait_to_click({'text': '连接'})
         client.wait_to_click({'text': '开始'})
+        try:
+            client.wait_to_click({'text': '确认'})
+        except ClientWaitTimeout:
+            pass
 
 
 class WaitFinishStage(Stage):
