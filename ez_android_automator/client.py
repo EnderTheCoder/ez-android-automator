@@ -103,7 +103,6 @@ class AndroidClient:
     """
 
     def __init__(self, device: uiautomator2.Device):
-        self.exception_handler = None
         self.rs = None
         self.device = device
         self.xml = ''
@@ -204,11 +203,11 @@ class AndroidClient:
             failure_callback(self)
         self.task = None
 
+    def run_current_task_async(self, failure_callback: Callable = None):
+        threading.Thread(target=self.run_current_task, args=(failure_callback,)).start()
+
     def set_task(self, task):
         self.task = task
-
-    def set_exception_handler(self, handler: TaskExceptionHandler):
-        self.exception_handler = handler
 
     def drag(self, slider: (int, int, int, int), rail: (int, int, int, int)):
         self.device.drag((slider[0] + slider[1]) / 2,
@@ -286,6 +285,7 @@ class ClientTask:
         self.exception: Exception
         self.callback = None
         self.callback: TaskCallback
+        self.handler = None
 
     def run(self, client: AndroidClient):
         try:
@@ -294,11 +294,13 @@ class ClientTask:
                 stage.run(client)
         except Exception as e:
             self.exception = e
-            if client.exception_handler is not None:
-                client.exception_handler.handle(client, self)
+            if self.handler is not None:
+                self.handler(client, self)
+            else:
+                raise e
         self.finished = True
         if self.callback is not None:
-            self.callback.run(self)
+            self.callback(self)
 
     def get_stage(self):
         return self.current_stage
@@ -315,8 +317,17 @@ class ClientTask:
     def append(self, stage: Stage):
         self.stages.append(stage)
 
-    def set_callback(self, callback: TaskCallback):
+    def set_callback(self, callback: callable):
+        """
+        This method set callback for the task, it will be called when a task is finished successfully.
+        """
         self.callback = callback
+
+    def set_handler(self, handler: callable):
+        """
+        This method set callback for the task, it will be called when a task is interrupted by an exception.
+        """
+        self.handler = handler
 
 
 class PublishTask(ClientTask):
@@ -367,44 +378,40 @@ class PhoneLoginTask(LoginTask):
     Base abstract class for using phone verify-code to login on apps.
     """
 
-    def __init__(self, phone: str, verify_callback: Callable[[], str]):
+    def __init__(self, phone: str):
         """
         :param phone: User phone number
-        :param verify_callback: A callback function, will be called after the phone verification code has been fired.
         """
         self.phone = phone
-        self.verify_callback = verify_callback
         self.code = None
         super().__init__()
 
+    def get_code(self) -> str:
+        return self.code
+
+    def send_captcha(self, captcha):
+        self.code = captcha
+        pass
 
 
+class StatisticTask(ClientTask):
+    def __init__(self):
+        super().__init__()
+        self.statistic = None
 
-class DownloadMediaStage(Stage):
-    def __init__(self, serial, url: str):
-        super().__init__(serial)
-        self.url = url
+    def statistic_callback(self, statistic: dict):
+        self.statistic = statistic
 
-    def run(self, client: AndroidClient):
-        client.restart_app('com.sec.android.app.sbrowser')
-        client.wait_to_click({'resource-id': 'com.sec.android.app.sbrowser:id/location_bar_edit_text'})
-        print("self.urlself.urlself.urlself.url", self.url)
-        client.device.send_keys(self.url)
-        client.device.send_action('go')
-        time.sleep(5)
-        # client.device.click(972, 1902)
-        # time.sleep(1)
-        # client.device.click(972, 1902)
-        # time.sleep(1)
-        # client.device.click(972, 1902)
-        client.device.click(1014, 1325)
-        time.sleep(1)
-        client.device.click(1014, 1325)
-        time.sleep(1)
-        client.device.click(1014, 1325)
-        client.wait_to_click({'text': '下载'})
-        client.wait_to_click({'text': '下载'})
-        client.wait_until_found({'text': '打开文件'}, timeout=600)
+
+class PullDataTask(ClientTask):
+    def __init__(self, from_package_name: str, from_path: str, sh_name: str, to_path: str, server_to_path: str, tar_name:str):
+        super().__init__()
+        self.from_package_name = from_package_name
+        self.from_path = from_path
+        self.sh_name = sh_name
+        self.to_path = to_path
+        self.server_to_path = server_to_path
+        self.tar_name = tar_name
 
 
 class WaitCallBackStage(Stage):
@@ -415,11 +422,22 @@ class WaitCallBackStage(Stage):
         self.task_callback = task_callback
         self.res = None
         super().__init__(stage_serial)
+        self.signal_terminate = False
 
     def get_code_wrapper(self):
-        self.task_callback(self.callback())
+        c = None
+        while c is None:
+            c = self.callback()
+            time.sleep(0.05)
+            if self.signal_terminate:
+                return
+        self.task_callback(c)
+
+    def terminate(self):
+        self.signal_terminate = True
 
     def run(self, client: AndroidClient):
+
         t = threading.Thread(target=self.get_code_wrapper)
         t.start()
         current_wait_time = 0.0
@@ -430,4 +448,17 @@ class WaitCallBackStage(Stage):
                 time.sleep(0.1)
                 current_wait_time += 0.1
                 if current_wait_time > self.max_wait_time:
+                    self.terminate()
                     raise CallbackWaitTimeoutException(self.stage_serial)
+
+
+class StatisticFetcher(ClientTask):
+    def __init__(self):
+        super().__init__()
+        pass
+
+
+class TaskAsStage(Stage):
+    def __init__(self, stage_serial: int):
+        super().__init__(stage_serial)
+

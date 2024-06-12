@@ -29,8 +29,8 @@ class ExampleHandler(TaskExceptionHandler):
 
 
 # Create clients
-client1 = create_network_client('192.168.1.1:5555')
-client2 = create_network_client('192.168.1.2:5555')
+client1 = create_network_client('192.168.3.52:5555')
+# client2 = create_network_client('192.168.1.2:5555')
 
 # set exception handler
 client1.set_exception_handler(ExampleHandler())
@@ -42,11 +42,11 @@ task.set_callback(ExampleCallback())
 # initialize manager
 manager = Manager()
 manager.add_client(client1)
-manager.add_client(client2)
+# manager.add_client(client2)
 
 # push task
 manager.push_task(task)
 # start manager
 manager.run()
 # unreachable code here. push task on another thread
-manager.push_task(task)
+# manager.push_task(task)

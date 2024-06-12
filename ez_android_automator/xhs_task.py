@@ -7,9 +7,6 @@
 @Motto：The only one true Legendary Grandmaster.
 """
 import time
-from typing import Callable
-
-from bs4 import BeautifulSoup
 from ez_android_automator.client import PublishTask, Stage, PublishClient, DownloadMediaStage, PhoneLoginTask, \
     PasswordLoginTask, AndroidClient, WaitCallBackStage
 
@@ -35,9 +32,6 @@ class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
         client.wait_to_click({'text': '视频'}, gap=1)
         client.wait_until_found({'text': '视频'})
-        # area = BeautifulSoup(str(client.rs[0].next.next.next.next.next), 'xml')
-        # elem = list(area.find_all(attrs={'class': 'android.widget.FrameLayout'})[3].children)[1]
-        # client.click_xml_node(elem)
         client.device.click(310, 445)
         client.wait_to_click({'content-desc': '下一步'})
         client.wait_to_click({'text': '下一步'})
@@ -85,6 +79,23 @@ class PhoneAuthCodeStage(Stage):
         self.code = code
 
 
+class PasswordLoginStage(Stage):
+    def __init__(self, serial, account, password):
+        super().__init__(serial)
+        self.account = account
+        self.password = password
+
+    def run(self, client: AndroidClient):
+        client.wait_to_click({'text': '手机号登录'})
+        client.wait_to_click({'text': '密码登录'})
+        client.device.send_keys(self.account)
+        client.wait_to_click({'text': '输入密码'})
+        client.device.send_keys(self.password)
+        client.wait_to_click({'text': '登录'})
+        time.sleep(0.5)
+        client.wait_to_click({'text': '同意并继续'})
+
+
 class XhsPublishVideoTask(PublishTask):
     """
     Publish a video on Xiaohongshu.
@@ -100,10 +111,17 @@ class XhsPublishVideoTask(PublishTask):
 
 
 class XhsPhoneLoginTask(PhoneLoginTask):
-    def __init__(self, phone: str, callback: Callable[[], str]):
-        super().__init__(phone, callback)
+    def __init__(self, phone: str):
+        super().__init__(phone)
         self.stages.append(OpenAppStage(0, True))
         self.stages.append(BeforeLoginStage(1, phone))
         auth_stage = PhoneAuthCodeStage(3)
-        self.stages.append(WaitCallBackStage(2, 60, callback, auth_stage.code_callback))
+        self.stages.append(WaitCallBackStage(2, 60, self.get_code, auth_stage.code_callback))
         self.stages.append(auth_stage)
+
+
+class XhsPasswordLoginTask(PasswordLoginTask):
+    def __init__(self, account: str, password: str):
+        super().__init__(account, password)
+        self.stages.append(OpenAppStage(0, True))
+        self.stages.append(PasswordLoginStage(1, account, password))

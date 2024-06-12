@@ -1,14 +1,14 @@
 """
-@Time: 2024/3/15 13:30
+@Time: 2024/3/6 11:00
 @Auth: coin
 @Email: 918731093@qq.com
-@File: douyin_task.py
+@File: kuaishoujisu_task.py
 @IDE: PyCharm
 @Motto：one coin
 """
 import time
 from ez_android_automator.client import Stage, PublishTask, DownloadMediaStage, PublishClient, AndroidClient, \
-    PhoneLoginTask, WaitCallBackStage, PasswordLoginTask, ClientWaitTimeout
+    PhoneLoginTask, WaitCallBackStage, PasswordLoginTask
 
 
 class OpenAppStage(Stage):
@@ -17,17 +17,14 @@ class OpenAppStage(Stage):
         super().__init__(serial)
 
     def run(self, client: PublishClient):
-        client.device.app_stop('com.ss.android.ugc.aweme')
+        client.restart_app("com.kuaishou.nebula", self.clear_data)
         if self.clear_data:
-            client.device.app_clear('com.ss.android.ugc.aweme')
-        client.device.shell('am start -n com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.main.MainActivity')
-        if self.clear_data:
-            client.wait_to_click({'text': '同意'})
+            client.wait_to_click({'text': '同意并继续'})
 
 
 class PressPublishButtonStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({'content-desc': '拍摄，按钮'})
+        client.wait_to_click({'resource-id': 'com.kuaishou.nebula:id/btn_shoot_skin'})
 
 
 class ChooseFirstVideoStage(Stage):
@@ -35,8 +32,10 @@ class ChooseFirstVideoStage(Stage):
         client.wait_to_click({'text': '相册'})
         client.wait_until_found({'text': '视频'})
         client.wait_to_click({'text': '视频'})
-        time.sleep(2)
-        client.device.click(200, 550)
+        client.wait_until_found({'text': '视频'})
+        client.device.click(300, 440)
+        client.wait_to_click({'text': '下一步(1)'})
+        client.wait_until_found({'text': '下一步'})
         client.wait_to_click({'text': '下一步'})
 
 
@@ -46,11 +45,9 @@ class SetVideoOptionsStage(Stage):
         self.content = content
 
     def run(self, client: PublishClient):
-        client.wait_to_click({'text': '添加作品描述..'})
+        client.wait_to_click({'text': '添加合适的话题和描述，作品能获得更多推荐'})
         client.device.send_keys(self.content)
-        client.device.keyevent('back')
-        client.find_xml_by_attr({'text': '发布'})
-        client.click_xml_node(client.rs[0])
+        client.wait_to_click({'text': '发布'})
 
 
 class BeforeLoginStage(Stage):
@@ -62,9 +59,8 @@ class BeforeLoginStage(Stage):
         client.wait_to_click({'text': '我'})
         client.wait_to_click({'text': '请输入手机号'})
         client.device.send_keys(self.phone)
-        client.wait_to_click({'text': '验证并登录'})
-        time.sleep(0.5)
-        client.wait_to_click({'text': '同意并登录'})
+        client.wait_to_click({'text': '获取验证码'})
+        client.wait_to_click({'text': '同意'})
 
 
 class PhoneAuthCodeStage(Stage):
@@ -74,7 +70,6 @@ class PhoneAuthCodeStage(Stage):
 
     def run(self, client: AndroidClient):
         client.device.send_keys(self.code)
-        client.wait_to_click({'text': '完成'})
 
     def code_callback(self, code: str):
         self.code = code
@@ -90,21 +85,16 @@ class PasswordLoginStage(Stage):
         client.wait_to_click({'text': '我'})
         client.wait_to_click({'text': '密码登录'})
         client.device.send_keys(self.account)
-        try:
-            client.wait_to_click({'text': '请先勾选，同意后再进行登录'})
-            client.wait_to_click({'text': '请输入密码'})
-            client.device.send_keys(self.password)
-            client.wait_to_click({'text': '登录'})
-        except ClientWaitTimeout as e:
-            client.wait_to_click({'text': '请输入密码'})
-            client.device.send_keys(self.password)
-            client.wait_to_click({'text': '登录'})
-            client.wait_to_click({'text': '同意并登录'})
+        client.wait_to_click({'text': '请输入密码'})
+        client.device.send_keys(self.password)
+        client.wait_to_click({'text': '登录'})
+        time.sleep(0.5)
+        client.wait_to_click({'text': '同意并登录'})
 
 
-class DouyinVideoPublishTask(PublishTask):
+class KuaishoujisuPublishVideoTask(PublishTask):
     """
-    Publish a video on Douyin.
+    Publish a video on Kuaishoujisu.
     """
 
     def __init__(self, priority: int, title: str, content: str, video: str):
@@ -116,7 +106,7 @@ class DouyinVideoPublishTask(PublishTask):
         self.stages.append(SetVideoOptionsStage(4, self.content))
 
 
-class DouyinPhoneLoginTask(PhoneLoginTask):
+class KuaishoujisuPhoneLoginTask(PhoneLoginTask):
     def __init__(self, phone: str):
         super().__init__(phone)
         self.stages.append(OpenAppStage(0, True))
@@ -126,11 +116,8 @@ class DouyinPhoneLoginTask(PhoneLoginTask):
         self.stages.append(auth_stage)
 
 
-class DouyinPasswordLoginTask(PasswordLoginTask, PhoneLoginTask):
+class KuaishoujisuPasswordLoginTask(PasswordLoginTask):
     def __init__(self, account: str, password: str):
         super().__init__(account, password)
         self.stages.append(OpenAppStage(0, True))
         self.stages.append(PasswordLoginStage(1, account, password))
-        auth_stage = PhoneAuthCodeStage(3)
-        self.stages.append(WaitCallBackStage(2, 60, self.get_code, auth_stage.code_callback))
-        self.stages.append(auth_stage)

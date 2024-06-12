@@ -1,12 +1,13 @@
 """
-@Time: 2024/3/15 13:30
+@Time: 2024/3/26 20:00
 @Auth: coin
 @Email: 918731093@qq.com
-@File: douyin_task.py
+@File: douyinhuoshan_task.py
 @IDE: PyCharm
 @Motto：one coin
 """
 import time
+from typing import Callable
 from ez_android_automator.client import Stage, PublishTask, DownloadMediaStage, PublishClient, AndroidClient, \
     PhoneLoginTask, WaitCallBackStage, PasswordLoginTask, ClientWaitTimeout
 
@@ -17,12 +18,10 @@ class OpenAppStage(Stage):
         super().__init__(serial)
 
     def run(self, client: PublishClient):
-        client.device.app_stop('com.ss.android.ugc.aweme')
-        if self.clear_data:
-            client.device.app_clear('com.ss.android.ugc.aweme')
-        client.device.shell('am start -n com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.main.MainActivity')
+        client.restart_app("com.ss.android.ugc.live", self.clear_data)
         if self.clear_data:
             client.wait_to_click({'text': '同意'})
+            client.wait_to_click({'text': '允许'})
 
 
 class PressPublishButtonStage(Stage):
@@ -33,10 +32,9 @@ class PressPublishButtonStage(Stage):
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
         client.wait_to_click({'text': '相册'})
-        client.wait_until_found({'text': '视频'})
         client.wait_to_click({'text': '视频'})
-        time.sleep(2)
-        client.device.click(200, 550)
+        time.sleep(1)
+        client.device.click(260, 460)
         client.wait_to_click({'text': '下一步'})
 
 
@@ -49,8 +47,7 @@ class SetVideoOptionsStage(Stage):
         client.wait_to_click({'text': '添加作品描述..'})
         client.device.send_keys(self.content)
         client.device.keyevent('back')
-        client.find_xml_by_attr({'text': '发布'})
-        client.click_xml_node(client.rs[0])
+        client.wait_to_click({'text': '发布'})
 
 
 class BeforeLoginStage(Stage):
@@ -63,7 +60,6 @@ class BeforeLoginStage(Stage):
         client.wait_to_click({'text': '请输入手机号'})
         client.device.send_keys(self.phone)
         client.wait_to_click({'text': '验证并登录'})
-        time.sleep(0.5)
         client.wait_to_click({'text': '同意并登录'})
 
 
@@ -74,7 +70,6 @@ class PhoneAuthCodeStage(Stage):
 
     def run(self, client: AndroidClient):
         client.device.send_keys(self.code)
-        client.wait_to_click({'text': '完成'})
 
     def code_callback(self, code: str):
         self.code = code
@@ -102,9 +97,14 @@ class PasswordLoginStage(Stage):
             client.wait_to_click({'text': '同意并登录'})
 
 
-class DouyinVideoPublishTask(PublishTask):
+class CompleteStage(Stage):
+    def run(self, client: AndroidClient):
+        client.wait_to_click({'text': '完成'})
+
+
+class DouyinhuoshanPublishVideoTask(PublishTask):
     """
-    Publish a video on Douyin.
+    Publish a video on Douyinhuoshan.
     """
 
     def __init__(self, priority: int, title: str, content: str, video: str):
@@ -116,7 +116,7 @@ class DouyinVideoPublishTask(PublishTask):
         self.stages.append(SetVideoOptionsStage(4, self.content))
 
 
-class DouyinPhoneLoginTask(PhoneLoginTask):
+class DouyinhuoshanPhoneLoginTask(PhoneLoginTask):
     def __init__(self, phone: str):
         super().__init__(phone)
         self.stages.append(OpenAppStage(0, True))
@@ -126,7 +126,7 @@ class DouyinPhoneLoginTask(PhoneLoginTask):
         self.stages.append(auth_stage)
 
 
-class DouyinPasswordLoginTask(PasswordLoginTask, PhoneLoginTask):
+class DouyinhuoshanPasswordLoginTask(PasswordLoginTask, PhoneLoginTask):
     def __init__(self, account: str, password: str):
         super().__init__(account, password)
         self.stages.append(OpenAppStage(0, True))
@@ -134,3 +134,4 @@ class DouyinPasswordLoginTask(PasswordLoginTask, PhoneLoginTask):
         auth_stage = PhoneAuthCodeStage(3)
         self.stages.append(WaitCallBackStage(2, 60, self.get_code, auth_stage.code_callback))
         self.stages.append(auth_stage)
+        self.stages.append(CompleteStage(4))

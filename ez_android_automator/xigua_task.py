@@ -1,14 +1,14 @@
 """
-@Time: 2024/3/15 13:30
+@Time: 2024/2/29 19:00
 @Auth: coin
 @Email: 918731093@qq.com
-@File: douyin_task.py
+@File: xigua_task.py
 @IDE: PyCharm
 @Motto：one coin
 """
 import time
 from ez_android_automator.client import Stage, PublishTask, DownloadMediaStage, PublishClient, AndroidClient, \
-    PhoneLoginTask, WaitCallBackStage, PasswordLoginTask, ClientWaitTimeout
+    WaitCallBackStage, PhoneLoginTask, PasswordLoginTask
 
 
 class OpenAppStage(Stage):
@@ -17,27 +17,24 @@ class OpenAppStage(Stage):
         super().__init__(serial)
 
     def run(self, client: PublishClient):
-        client.device.app_stop('com.ss.android.ugc.aweme')
+        client.restart_app("com.ss.android.article.video", self.clear_data)
         if self.clear_data:
-            client.device.app_clear('com.ss.android.ugc.aweme')
-        client.device.shell('am start -n com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.main.MainActivity')
-        if self.clear_data:
+            time.sleep(1)
             client.wait_to_click({'text': '同意'})
+            client.wait_to_click({'text': '取消'})
+            client.wait_to_click({'text': '允许'})
 
 
 class PressPublishButtonStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({'content-desc': '拍摄，按钮'})
+        client.wait_to_click({'text': '发视频'})
 
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({'text': '相册'})
-        client.wait_until_found({'text': '视频'})
-        client.wait_to_click({'text': '视频'})
-        time.sleep(2)
-        client.device.click(200, 550)
-        client.wait_to_click({'text': '下一步'})
+        client.device.sleep(1)
+        client.device.click(300, 500)
+        client.wait_to_click({'text': '去发布'})
 
 
 class SetVideoOptionsStage(Stage):
@@ -46,11 +43,10 @@ class SetVideoOptionsStage(Stage):
         self.content = content
 
     def run(self, client: PublishClient):
-        client.wait_to_click({'text': '添加作品描述..'})
+        client.wait_to_click({'text': '输入标题 (必填）'})
         client.device.send_keys(self.content)
         client.device.keyevent('back')
-        client.find_xml_by_attr({'text': '发布'})
-        client.click_xml_node(client.rs[0])
+        client.wait_to_click({'text': '发布'})
 
 
 class BeforeLoginStage(Stage):
@@ -59,25 +55,12 @@ class BeforeLoginStage(Stage):
         self.phone = phone
 
     def run(self, client: AndroidClient):
-        client.wait_to_click({'text': '我'})
-        client.wait_to_click({'text': '请输入手机号'})
+        client.wait_to_click({'text': '我的'})
+        client.wait_to_click({'text': '其他登录方式'})
+        client.wait_to_click({'text': '输入手机号'})
         client.device.send_keys(self.phone)
-        client.wait_to_click({'text': '验证并登录'})
-        time.sleep(0.5)
-        client.wait_to_click({'text': '同意并登录'})
-
-
-class PhoneAuthCodeStage(Stage):
-    def __init__(self, serial):
-        super().__init__(serial)
-        self.code = None
-
-    def run(self, client: AndroidClient):
-        client.device.send_keys(self.code)
-        client.wait_to_click({'text': '完成'})
-
-    def code_callback(self, code: str):
-        self.code = code
+        client.wait_to_click({'text': '登录'})
+        client.wait_to_click({'text': '同意'})
 
 
 class PasswordLoginStage(Stage):
@@ -87,24 +70,38 @@ class PasswordLoginStage(Stage):
         self.password = password
 
     def run(self, client: AndroidClient):
-        client.wait_to_click({'text': '我'})
+        client.wait_to_click({'text': '我的'})
+        client.wait_to_click({'text': '其他登录方式'})
         client.wait_to_click({'text': '密码登录'})
+        client.wait_to_click({'text': '输入手机号'})
         client.device.send_keys(self.account)
-        try:
-            client.wait_to_click({'text': '请先勾选，同意后再进行登录'})
-            client.wait_to_click({'text': '请输入密码'})
-            client.device.send_keys(self.password)
-            client.wait_to_click({'text': '登录'})
-        except ClientWaitTimeout as e:
-            client.wait_to_click({'text': '请输入密码'})
-            client.device.send_keys(self.password)
-            client.wait_to_click({'text': '登录'})
-            client.wait_to_click({'text': '同意并登录'})
+        client.wait_to_click({'text': '请输入密码'})
+        client.device.send_keys(self.password)
+        client.wait_to_click({'text': '登录'})
+        client.wait_to_click({'text': '同意'})
+        client.wait_to_click({'text': '下次再说'})
 
 
-class DouyinVideoPublishTask(PublishTask):
+class PhoneAuthCodeStage(Stage):
+    def __init__(self, serial):
+        super().__init__(serial)
+        self.code = None
+
+    def run(self, client: AndroidClient):
+        client.device.send_keys(self.code)
+
+    def code_callback(self, code: str):
+        self.code = code
+
+
+class CompleteStage(Stage):
+    def run(self, client: AndroidClient):
+        client.wait_to_click({'text': '下次再说'})
+
+
+class XiguaPublishVideoTask(PublishTask):
     """
-    Publish a video on Douyin.
+    Publish a video on Xigua.
     """
 
     def __init__(self, priority: int, title: str, content: str, video: str):
@@ -116,7 +113,7 @@ class DouyinVideoPublishTask(PublishTask):
         self.stages.append(SetVideoOptionsStage(4, self.content))
 
 
-class DouyinPhoneLoginTask(PhoneLoginTask):
+class XiguaPhoneLoginTask(PhoneLoginTask):
     def __init__(self, phone: str):
         super().__init__(phone)
         self.stages.append(OpenAppStage(0, True))
@@ -124,13 +121,11 @@ class DouyinPhoneLoginTask(PhoneLoginTask):
         auth_stage = PhoneAuthCodeStage(3)
         self.stages.append(WaitCallBackStage(2, 60, self.get_code, auth_stage.code_callback))
         self.stages.append(auth_stage)
+        self.stages.append(CompleteStage(4))
 
 
-class DouyinPasswordLoginTask(PasswordLoginTask, PhoneLoginTask):
+class XiguaPasswordLoginTask(PasswordLoginTask):
     def __init__(self, account: str, password: str):
         super().__init__(account, password)
         self.stages.append(OpenAppStage(0, True))
         self.stages.append(PasswordLoginStage(1, account, password))
-        auth_stage = PhoneAuthCodeStage(3)
-        self.stages.append(WaitCallBackStage(2, 60, self.get_code, auth_stage.code_callback))
-        self.stages.append(auth_stage)
