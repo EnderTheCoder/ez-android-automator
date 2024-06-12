@@ -339,8 +339,8 @@ class PublishTask(ClientTask):
     Base abstract class for a publishing-type task
     """
 
-    def __init__(self, title: str, content: str, video: str, photo: str):
-        super().__init__()
+    def __init__(self, priority: int, title: str, content: str, video: str, photo: str):
+        super().__init__(priority)
         self.title = title
         self.content = content
         self.video = video
@@ -465,6 +465,7 @@ class TaskAsStage(Stage):
     """
     Use task as a stage. With this, you can combine tasks dependent on each others together.
     """
+
     def __init__(self, stage_serial: int, task: ClientTask):
         super().__init__(stage_serial)
         self.task = task
