@@ -459,6 +459,11 @@ class StatisticFetcher(ClientTask):
 
 
 class TaskAsStage(Stage):
-    def __init__(self, stage_serial: int):
+    def __init__(self, stage_serial: int, task: ClientTask):
         super().__init__(stage_serial)
+        self.task = task
 
+    def run(self, client: AndroidClient):
+        self.task.run(client)
+        if self.task.is_exception():
+            raise self.task.exception
