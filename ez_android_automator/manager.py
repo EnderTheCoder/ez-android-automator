@@ -21,7 +21,7 @@ class Manager:
     def add_client(self, _client: client.AndroidClient):
         self.clients[_client.device.address] = _client
 
-    def push_task(self, task: client.PublishTask):
+    def push_task(self, task: client.ClientTask):
         self.tasks.put((task.priority, task))
 
     def set_max_priority(self, priority: int):
@@ -51,7 +51,7 @@ class Manager:
                         self.idle_task()
                         pass
 
-    def run_asynchronously(self):
+    def start(self):
         threading.Thread(target=self.run, args=(self,)).start()
 
     def maintain_clients(self):

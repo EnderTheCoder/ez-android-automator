@@ -277,7 +277,7 @@ class CallbackWaitTimeoutException(Exception):
 
 
 class ClientTask:
-    def __init__(self):
+    def __init__(self, priority: int = 3):
         self.stages = list[Stage]()
         self.current_stage = -1
         self.exception = None
@@ -286,6 +286,7 @@ class ClientTask:
         self.callback = None
         self.callback: TaskCallback
         self.handler = None
+        self.priority = priority
 
     def run(self, client: AndroidClient):
         try:
@@ -301,6 +302,9 @@ class ClientTask:
         self.finished = True
         if self.callback is not None:
             self.callback(self)
+
+    def __lt__(self, other):
+        return self.priority < other.priority
 
     def get_stage(self):
         return self.current_stage
@@ -335,9 +339,8 @@ class PublishTask(ClientTask):
     Base abstract class for a publishing-type task
     """
 
-    def __init__(self, priority: int, title: str, content: str, video: str, photo: str):
+    def __init__(self, title: str, content: str, video: str, photo: str):
         super().__init__()
-        self.priority = priority
         self.title = title
         self.content = content
         self.video = video
@@ -347,7 +350,6 @@ class PublishTask(ClientTask):
         self.current_stage = -1
         self.exception = None
         self.finished = False
-        self.exception: Exception
         self.priority += 1
 
 
@@ -404,7 +406,8 @@ class StatisticTask(ClientTask):
 
 
 class PullDataTask(ClientTask):
-    def __init__(self, from_package_name: str, from_path: str, sh_name: str, to_path: str, server_to_path: str, tar_name:str):
+    def __init__(self, from_package_name: str, from_path: str, sh_name: str, to_path: str, server_to_path: str,
+                 tar_name: str):
         super().__init__()
         self.from_package_name = from_package_name
         self.from_path = from_path
@@ -461,4 +464,3 @@ class StatisticFetcher(ClientTask):
 class TaskAsStage(Stage):
     def __init__(self, stage_serial: int):
         super().__init__(stage_serial)
-
