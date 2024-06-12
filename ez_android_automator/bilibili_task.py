@@ -84,13 +84,13 @@ class PullDataShStage(Stage):
 
     def run(self, client: AndroidClient):
 
-        client.device.push(self.server_to_path+self.tar_name, self.to_path)
+        client.device.push(self.server_to_path+'/'+self.tar_name, self.to_path + "/adbSH/")
 
         # 构建命令列表
         commands = [
             'su',
-            f'cp -r {self.to_path}{self.tar_name} {self.from_packagename}{self.from_path} ',
-            f'tar -zxvf {self.from_packagename}{self.tar_name}',
+            f'cp -r {self.to_path}/{self.tar_name} {self.from_packagename}',
+            f'tar -xf {self.from_packagename}/{self.tar_name} {self.from_packagename}',
         ]
         # 将命令连接为单个字符串，并确保使用 Unix 换行符
         script_content = "#!/bin/bash\n\n" + "\n".join(commands) + "\n"
@@ -98,6 +98,8 @@ class PullDataShStage(Stage):
         with open(self.sh_name, "w", newline='\n', encoding='utf-8') as file:
             file.write(script_content)
         client.device.push(self.sh_name, self.to_path + "/adbSH/")
+
+        client.device.shell('sh ' + self.to_path + '/adbSH/' + self.sh_name)
 
 
 class OpenAppStage(Stage):
