@@ -25,18 +25,13 @@ class GetAccountStage(Stage):
         client.device.shell('sh ' + self.to_path + '/adbSH/' + self.sh_name)
 
         # 指定要拉取的文件路径和保存到本地的目录路径
-        source_path = self.to_path + '/' + self.tar_name
+        source_path = self.to_path + '/' + self.tar_name + '.tar.gz'
         destination_path = self.server_to_path
         print(source_path)
         print(destination_path)
-
-        # source_path = "/sdcard/adbAccountTest/app_account.tar.gz"
-        # destination_path = "AccountData"
-
-        # adb_pull_command = "D:/path/to/adb.exe pull" + source_path + " " + destination_path
-        # os.system(adb_pull_command)
-        client.device.pull(self.to_path + '/' + self.tar_name,
-                           'D:\\programMedia\\ez-android-automator\\AccountData')  # self.server_to_path
+        client.device.pull(source_path,destination_path)
+        import os
+        os.system(f'adb shell {source_path} {destination_path}')
         # 构造 adb pull 命令并执行
         # adb_pull_command = f"adb pull {source_path} {destination_path}"
         # os.system(adb_pull_command)
@@ -54,13 +49,14 @@ class CreateShStage(Stage):
     def run(self, client: AndroidClient):
         # 构建命令列表
         commands = [
-            f'mkdir -p {self.to_path}{self.from_path}',
+            f'mkdir -p {self.to_path}/{self.from_path}',
             'su',
-            f'cp -r {self.from_packagename}{self.from_path} {self.to_path}',
-            f'chmod 777 -R {self.to_path}{self.from_path}',
+            f'cp -r {self.from_packagename}/{self.from_path} {self.to_path}',
+            f'chmod 777 -R {self.to_path}/{self.from_path}',
             f'cd {self.to_path}',
-            f'tar -zcvf {self.to_path}/{self.tar_name} {self.to_path}',
-            f'chmod 777 -R {self.to_path}/{self.tar_name}',
+            f'tar -zcvf {self.tar_name}.tar.gz {self.from_path}',
+            f'chmod 777 -R {self.to_path}/{self.tar_name}.tar.gz',
+            f'mkdir -p {self.to_path}/Datas'
         ]
 
         # 将命令连接为单个字符串，并确保使用 Unix 换行符
@@ -84,13 +80,16 @@ class PullDataShStage(Stage):
 
     def run(self, client: AndroidClient):
 
-        client.device.push(self.server_to_path+'/'+self.tar_name, self.to_path + "/adbSH/")
+        client.device.push(self.server_to_path+'/'+self.tar_name+'.tar.gz', self.to_path+self.from_path)
 
         # 构建命令列表
         commands = [
             'su',
-            f'cp -r {self.to_path}/{self.tar_name} {self.from_packagename}',
-            f'tar -xf {self.from_packagename}/{self.tar_name} {self.from_packagename}',
+            f'cd {self.to_path}/{self.from_path}',
+            f'tar -xf {self.to_path}/{self.tar_name}.tar.gz',
+            # f'tar -xf {self.from_packagename}/{self.tar_name} {self.from_packagename}',
+            f'cp -r {self.to_path}/{self.from_path}/{self.tar_name} {self.from_packagename}',
+            f'rm -r {self.to_path}/{self.from_path}/{self.tar_name}',
         ]
         # 将命令连接为单个字符串，并确保使用 Unix 换行符
         script_content = "#!/bin/bash\n\n" + "\n".join(commands) + "\n"
