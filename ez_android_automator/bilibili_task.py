@@ -4,13 +4,12 @@
 @Email: 918731093@qq.com
 @File: bilibili_task.py
 @IDE: PyCharm
-@Motto：one coin
+@Motto: one coin
 """
-import os
-import subprocess
 import time
 from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, \
-    PhoneLoginTask, WaitCallBackStage, StatisticTask, PullDataTask
+    PhoneLoginTask, WaitCallBackStage, StatisticTask, PullDataTask, TaskAsStage
+from ez_android_automator.idm_task import IDMPullTask
 
 
 class GetAccountStage(Stage):
@@ -106,6 +105,7 @@ class OpenAppStage(Stage):
 
     def run(self, client: PublishClient):
         client.restart_app("tv.danmaku.bili", self.clear_data)
+        time.sleep(7)
         if self.clear_data:
             client.wait_to_click({'text': '同意并继续'})
 
@@ -143,8 +143,8 @@ class PressPublishButtonStage(Stage):
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
         client.wait_to_click({'text': '视频'})
-        time.sleep(1)
-        client.device.click(160, 650)
+        time.sleep(7)
+        client.device.click(190, 970)
         client.wait_to_click({'text': '发布'})
 
 
@@ -206,9 +206,10 @@ class BilibiliStatisticTask(StatisticTask):
     def __init__(self, video_title):
         super().__init__()
         self.statistic = None
-        self.append(OpenAppStage(0))
-        self.append(StatisticCenterStage(1))
-        self.append(GetStatisticStage(2, video_title, self.statistic_callback))
+        # self.append(TaskAsStage(0, ))
+        self.append(OpenAppStage(1))
+        self.append(StatisticCenterStage(2))
+        self.append(GetStatisticStage(3, video_title, self.statistic_callback))
 
     def statistic_callback(self, statistic: dict):
         self.statistic = statistic
@@ -221,7 +222,8 @@ class BilibiliPublishVideoTask(PublishTask):
 
     def __init__(self, priority: int, title: str, content: str, video: str):
         super().__init__(priority, title, content, video, '')
-        # self.stages.append(DownloadMediaStage(0, video))
+        task = IDMPullTask(video)
+        self.stages.append(TaskAsStage(0, task))
         self.stages.append(OpenAppStage(1))
         self.stages.append(PressPublishButtonStage(2))
         self.stages.append(ChooseFirstVideoStage(3))
@@ -247,7 +249,3 @@ class BilibiliGetAccountTask(PullDataTask):
         # self.stages.append(GetAccountStage(to_path + from_path, server_to_path, 1, sh_name))
         self.stages.append(GetAccountStage(from_path, to_path, server_to_path, 1, sh_name, tar_name))
 
-class BilibiliTranAccountTask(PullDataTask):
-    def __init__(self, from_package_name: str, from_path: str, sh_name: str, to_path: str, server_to_path: str,tar_name: str):
-        super().__init__(from_package_name, from_path, sh_name, to_path, server_to_path, tar_name)
-        self.stages.append(PullDataShStage(from_package_name, from_path, 0, sh_name, to_path, tar_name, server_to_path))

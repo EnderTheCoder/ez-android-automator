@@ -6,9 +6,11 @@
 @IDE: PyCharm
 @Motto：one coin
 """
+import time
 
-from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, DownloadMediaStage, \
-    PhoneLoginTask, WaitCallBackStage
+from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, \
+    PhoneLoginTask, WaitCallBackStage, TaskAsStage
+from ez_android_automator.idm_task import IDMPullTask
 
 
 class OpenAppStage(Stage):
@@ -42,8 +44,7 @@ class PhoneAuthCodeStage(Stage):
     def run(self, client: AndroidClient):
         client.device.send_keys(self.code)
         client.wait_to_click({"text": "同意并登录"})
-        client.wait_to_click({"text": "跳过"})
-        client.wait_to_click({"text": "跳过"})
+        client.wait_to_click({"NAF": "true"})
 
     def code_callback(self, code: str):
         self.code = code
@@ -51,15 +52,17 @@ class PhoneAuthCodeStage(Stage):
 
 class PressPublishButtonStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({"resource-id": "com.sina.weibo:id/rlredpacketSave"})
+        client.wait_to_click({"resource-id": "com.sina.weibo:id/home_bar_right_tv1"})
         client.wait_to_click({"text": "视频"})
 
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
+        time.sleep(1)
         client.device.click(495, 270)
         client.wait_to_click({'text': '下一步(1)'})
         client.wait_to_click({'text': '下一步'})
+        client.wait_to_click({'text': '确定'})
 
 
 class SetVideoOptionsStage(Stage):
@@ -84,7 +87,8 @@ class WeiboPublishVideoTask(PublishTask):
 
     def __init__(self, priority: int, title: str, content: str, video: str):
         super().__init__(priority, title, content, video, '')
-        # self.stages.append(DownloadMediaStage(0, video))
+        task = IDMPullTask(video)
+        self.stages.append(TaskAsStage(0, task))
         self.stages.append(OpenAppStage(1))
         self.stages.append(PressPublishButtonStage(2))
         self.stages.append(ChooseFirstVideoStage(3))
