@@ -80,6 +80,7 @@ class OpenAppStage(Stage):
 
     def run(self, client: PublishClient):
         client.restart_app("tv.danmaku.bili", self.clear_data)
+        time.sleep(7)
         if self.clear_data:
             client.wait_to_click({'text': '同意并继续'})
 
@@ -117,8 +118,8 @@ class PressPublishButtonStage(Stage):
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
         client.wait_to_click({'text': '视频'})
-        time.sleep(1)
-        client.device.click(160, 650)
+        time.sleep(7)
+        client.device.click(190, 970)
         client.wait_to_click({'text': '发布'})
 
 

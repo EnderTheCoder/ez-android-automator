@@ -1,3 +1,5 @@
+import time
+
 from .client import PublishClient, ClientTask, Stage, AndroidClient, CallbackWaitTimeoutException, ClientWaitTimeout
 
 
@@ -30,6 +32,7 @@ class WaitFinishStage(Stage):
         self.timeout = timeout
 
     def run(self, client: AndroidClient):
+        time.sleep(10)
         pass
 
 
