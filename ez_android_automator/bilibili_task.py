@@ -7,6 +7,7 @@
 @Motto：one coin
 """
 import os
+import subprocess
 import time
 from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, \
     PhoneLoginTask, WaitCallBackStage, StatisticTask, PullDataTask
@@ -23,18 +24,15 @@ class GetAccountStage(Stage):
 
     def run(self, client: AndroidClient):
         client.device.shell('sh ' + self.to_path + '/adbSH/' + self.sh_name)
-
         # 指定要拉取的文件路径和保存到本地的目录路径
         source_path = self.to_path + '/' + self.tar_name + '.tar.gz'
         destination_path = self.server_to_path
         print(source_path)
         print(destination_path)
-        client.device.pull(source_path,destination_path)
-        import os
+        # client.device.pull(source_path,destination_path)
         os.system(f'adb shell {source_path} {destination_path}')
-        # 构造 adb pull 命令并执行
-        # adb_pull_command = f"adb pull {source_path} {destination_path}"
-        # os.system(adb_pull_command)
+        command = f"adb pull {source_path} {destination_path}"
+        subprocess.run(command, shell=True)
 
 
 class CreateShStage(Stage):
