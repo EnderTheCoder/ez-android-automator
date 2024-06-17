@@ -412,7 +412,6 @@ class PullAccountTask(ClientTask):
         client.device.shell('sh ' + self.to_path + '/adbSH/' + self.sh_name)
         source_path = self.to_path + '/' + self.tar_name + '.tar.gz'
         destination_path = self.server_to_path
-        os.system(f'adb shell {source_path} {destination_path}')
         command = f"adb pull {source_path} {destination_path}"
         subprocess.run(command, shell=True)
 
