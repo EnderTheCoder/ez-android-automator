@@ -6,9 +6,10 @@
 @IDE: PyCharm
 @Motto: one coin
 """
-import os
-import subprocess
 import time
+
+import bs4
+
 from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, \
     PhoneLoginTask, WaitCallBackStage, StatisticTask, PushAccountTask, TaskAsStage, PullAccountTask
 from ez_android_automator.idm_task import IDMPullTask
@@ -136,9 +137,9 @@ class BilibiliPublishVideoTask(PublishTask):
     Publish a video on Bilibili.
     """
 
-    def __init__(self, priority: int, title: str, content: str, video: str):
+    def __init__(self, priority: int, title: str, content: str, video: str, download_timeout: int = 120):
         super().__init__(priority, title, content, video, '')
-        task = IDMPullTask(video)
+        task = IDMPullTask(video, download_timeout=download_timeout)
         self.stages.append(TaskAsStage(0, task))
         self.stages.append(OpenAppStage(1))
         self.stages.append(PressPublishButtonStage(2))
