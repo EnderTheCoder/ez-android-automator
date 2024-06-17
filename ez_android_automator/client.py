@@ -458,7 +458,7 @@ class CombinedSequentialTask(ClientTask):
     """
     Now you can execute sequential tasks dependent on each other together using this combined task.
     This is to assure that multiple tasks can be executed sequentially on same device when using manager.
-    :example:  task = CombinedSequentialTask(TaskA, TaskB, TaskC)
+    :example:  task = CombinedSequentialTask(TaskA(), TaskB(), TaskC())
     """
 
     def __init__(self, *args):
