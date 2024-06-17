@@ -10,7 +10,7 @@ This file contains ez_android_automator classes and helper functions relating Cl
 """
 import threading
 import warnings
-from typing import Callable
+from typing import Callable, Any
 
 import bs4
 import uiautomator2
@@ -239,22 +239,30 @@ class CallbackWaitTimeoutException(TimeoutError):
         super().__init__(f"Wait too long on this callback. Stage:{stage_serial}")
 
 
+class InvalidStageSerialException(Exception):
+    def __init__(self, stage):
+        super().__init__(f"Invalid stage serial for stage '{type(stage).__name__}'."
+                         " Using a wrong stage serial can cause unexpected execution sequence for stages in a task."
+                         "Assign valid stage serial in [0, n-1]")
+
+
 class ClientTask:
     def __init__(self, priority: int = 3):
+        self.callback = None
         self.stages = list[Stage]()
         self.current_stage = -1
         self.exception = None
         self.finished = False
         self.exception: Exception
-        self.callback = None
-        self.callback: callable = None
+        self.callback: Callable
+        self.callback: Callable
         self.handler = None
         self.priority = priority
 
     def run(self, client: AndroidClient):
         if self.handler is None:
             warnings.warn(f'Handler for task {type(self).__name__} has not been implemented yet.'
-                          'This may crash the manager.')
+                          'This may cause a crash when using manager to dispatch tasks.')
         try:
             for i, stage in enumerate(self.stages):
                 self.current_stage = i
@@ -262,12 +270,12 @@ class ClientTask:
         except Exception as e:
             self.exception = e
             if self.handler is not None:
-                self.handler(client, self)
+                self.handler(client, self, e)
             else:
                 raise e
         self.finished = True
         if self.callback is not None:
-            self.callback(self)
+            self.callback(client, self)
 
     def __lt__(self, other):
         return self.priority < other.priority
@@ -285,17 +293,21 @@ class ClientTask:
         return self.exception is not None
 
     def append(self, stage: Stage):
+        if len(self.stages) != stage.stage_serial:
+            raise InvalidStageSerialException(stage)
         self.stages.append(stage)
 
-    def set_callback(self, callback: callable):
+    def set_callback(self, callback: Callable[[Any], None]):
         """
         This method set callback for the task, it will be called when a task is finished successfully.
+        Implement a function with sign [(ClientTask) -> None] to accept callback.
         """
         self.callback = callback
 
-    def set_handler(self, handler: callable):
+    def set_handler(self, handler: Callable[[AndroidClient, Any, Exception], None]):
         """
         This method set callback for the task, it will be called when a task is interrupted by an exception.
+        Implement a function with sign [(AndroidClient, ClientTask, Exception) -> None] to handle exception.
         """
         self.handler = handler
 
