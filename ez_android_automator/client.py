@@ -59,44 +59,6 @@ class PhoneLoginException(Exception):
         super().__init__(msg)
 
 
-class TaskCallback:
-    """
-    Executed when a task is completed. Use this to pass data back to main system.
-    """
-
-    def run(self, task):
-        pass
-
-
-class TaskExceptionHandler:
-    """
-    Base abstract class for handling exception in execution of tasks. Extend this class to do handling.
-    """
-
-    def __init__(self):
-        pass
-
-    def handle(self, _client, task):
-        """
-        Override this method to handle the exception.
-        :param _client: the client that throws the exception
-        :param task: current task in execution
-        :return:
-        """
-        pass
-
-
-class TestHandler(TaskExceptionHandler):
-    def handle(self, _client, task):
-        raise task.exception
-
-
-class DebugHandler(TaskExceptionHandler):
-
-    def handle(self, _client, task):
-        _client.device.screenshot("latest_failure.jpg")
-
-
 class AndroidClient:
     """
     Base client for controlling android devices
@@ -108,7 +70,6 @@ class AndroidClient:
         self.xml = ''
         self.task = None
         self.task: ClientTask
-        self.exception_handler: TaskExceptionHandler
         self.rs: bs4.ResultSet
         self.occupied = False
 
@@ -284,7 +245,7 @@ class ClientTask:
         self.finished = False
         self.exception: Exception
         self.callback = None
-        self.callback: TaskCallback
+        self.callback: callable = None
         self.handler = None
         self.priority = priority
 
@@ -481,6 +442,7 @@ class CombinedSequentialTask(ClientTask):
     Now you can execute sequential tasks dependent on each other together using this combined task.
     :example:  task = CombinedSequentialTask(TaskA, TaskB, TaskC)
     """
+
     def __init__(self, *args):
         super().__init__()
         for i, task in enumerate(args):
