@@ -375,7 +375,10 @@ class StatisticTask(ClientTask):
         self.statistic = statistic
 
 
-class PushDataTask(ClientTask):
+class PullAccountTask(ClientTask):
+    """
+    Pull account data files from client to host.
+    """
 
     def __init__(self, from_path: str, to_path: str, server_to_path: str, serial: int, sh_name: str, tar_name: str,
                  from_packagename: str):
@@ -414,7 +417,11 @@ class PushDataTask(ClientTask):
         subprocess.run(command, shell=True)
 
 
-class PullDataTask(ClientTask):
+class PushAccountTask(ClientTask):
+    """
+    Push account data files from host to client.
+    """
+
     def __init__(self, from_packagename: str, from_path: str, sh_name: str, to_path: str, server_to_path: str,
                  tar_name: str):
         super().__init__()
@@ -438,7 +445,6 @@ class PullDataTask(ClientTask):
         with open(self.sh_name, "w", newline='\n', encoding='utf-8') as file:
             file.write(script_content)
         client.device.push(self.sh_name, self.to_path + "/adbSH/")
-
         client.device.shell('sh ' + self.to_path + '/adbSH/' + self.sh_name)
 
 

@@ -10,7 +10,7 @@ import os
 import subprocess
 import time
 from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, \
-    PhoneLoginTask, WaitCallBackStage, StatisticTask, PullDataTask, TaskAsStage, PushDataTask
+    PhoneLoginTask, WaitCallBackStage, StatisticTask, PushAccountTask, TaskAsStage, PullAccountTask
 from ez_android_automator.idm_task import IDMPullTask
 
 
@@ -156,14 +156,14 @@ class BilibiliPhoneLoginTask(PhoneLoginTask):
         self.stages.append(auth_stage)
 
 
-class BilibiliGetAccountTask(PullDataTask):
+class BilibiliGetAccountTaskAccount(PushAccountTask):
     def __init__(self, client: AndroidClient, from_packagename: str, from_path: str, sh_name: str, to_path: str, server_to_path: str,
                  tar_name: str):
         super().__init__(from_packagename, from_path, sh_name, to_path, server_to_path, tar_name)
         self.stages.append(self.run(client=client))
 
 
-class BilibiliTranAccountTask(PushDataTask):
+class BilibiliTranAccountTaskAccount(PullAccountTask):
     def __init__(self, client: AndroidClient,from_packagename: str, from_path: str, sh_name: str, to_path: str, server_to_path: str,
                  tar_name: str):
         super().__init__(from_path,to_path,server_to_path,0,sh_name,tar_name,from_packagename)

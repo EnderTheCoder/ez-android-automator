@@ -8,7 +8,7 @@
 """
 import time
 from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, \
-    PhoneLoginTask, WaitCallBackStage, StatisticTask, PullDataTask, TaskAsStage
+    PhoneLoginTask, WaitCallBackStage, StatisticTask, PushAccountTask, TaskAsStage
 from ez_android_automator.idm_task import IDMPullTask
 
 
