@@ -474,3 +474,14 @@ class TaskAsStage(Stage):
         self.task.run(client)
         if self.task.is_exception():
             raise self.task.exception
+
+
+class CombinedSequentialTask(ClientTask):
+    """
+    Now you can execute sequential tasks dependent on each other together using this combined task.
+    :example:  task = CombinedSequentialTask(TaskA, TaskB, TaskC)
+    """
+    def __init__(self, *args):
+        super().__init__()
+        for i, task in enumerate(args):
+            self.append(TaskAsStage(i, task))
