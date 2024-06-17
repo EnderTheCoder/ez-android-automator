@@ -9,6 +9,7 @@
 This file contains ez_android_automator classes and helper functions relating Client, Task and Exception.
 """
 import threading
+import warnings
 from typing import Callable
 
 import bs4
@@ -158,14 +159,15 @@ class AndroidClient:
 
         self.wait_until_finish(bool_lambda, timeout=timeout)
 
-    def run_current_task(self, failure_callback: Callable = None):
+    def run_current_task(self, failure_callback: callable = None, clear_task: bool = True):
         self.task.run(self)
-        if self.task.is_exception() and failure_callback is not None:
+        if not self.task.is_finished and failure_callback is not None:
             failure_callback(self)
-        self.task = None
+        if clear_task:
+            self.task = None
 
-    def run_current_task_async(self, failure_callback: Callable = None):
-        threading.Thread(target=self.run_current_task, args=(failure_callback,)).start()
+    def run_current_task_async(self, failure_callback: callable = None, clear_task: bool = True):
+        threading.Thread(target=self.run_current_task, args=(failure_callback, clear_task,)).start()
 
     def set_task(self, task):
         self.task = task
@@ -250,6 +252,9 @@ class ClientTask:
         self.priority = priority
 
     def run(self, client: AndroidClient):
+        if self.handler is None:
+            warnings.warn(f'Handler for task {type(self).__name__} has not been implemented yet.'
+                          'This may crash the manager.')
         try:
             for i, stage in enumerate(self.stages):
                 self.current_stage = i
