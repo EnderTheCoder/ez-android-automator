@@ -297,10 +297,10 @@ class ClientTask:
             raise InvalidStageSerialException(stage)
         self.stages.append(stage)
 
-    def set_callback(self, callback: Callable[[Any], None]):
+    def set_callback(self, callback: Callable[[AndroidClient, Any], None]):
         """
         This method set callback for the task, it will be called when a task is finished successfully.
-        Implement a function with sign [(ClientTask) -> None] to accept callback.
+        Implement a function with sign [(AndroidClient, ClientTask) -> None] to accept callback.
         """
         self.callback = callback
 
