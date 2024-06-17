@@ -20,6 +20,7 @@ def success(_client, _task):
 
 def fail(_client, _task, _exception):
     print("we failed.")
+    return False
 
 
 # extend handler to create your own handler.

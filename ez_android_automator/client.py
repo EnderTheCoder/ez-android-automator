@@ -254,16 +254,17 @@ class ClientTask:
         if self.handler is None:
             warnings.warn(f'Handler for task {type(self).__name__} has not been implemented yet.'
                           'This may cause a crash when using manager to dispatch tasks.')
-        try:
-            for i, stage in enumerate(self.stages):
-                self.current_stage = i
+        for i, stage in enumerate(self.stages):
+            self.current_stage = i
+            try:
                 stage.run(client)
-        except Exception as e:
-            self.exception = e
-            if self.handler is not None:
-                self.handler(client, self, e)
-            else:
-                raise e
+            except Exception as e:
+                self.exception = e
+                if self.handler is not None:
+                    if not self.handler(client, self, e):
+                        break
+                else:
+                    raise e
         self.finished = True
         if self.callback is not None:
             self.callback(client, self)
@@ -295,10 +296,10 @@ class ClientTask:
         """
         self.callback = callback
 
-    def set_handler(self, handler: Callable[[AndroidClient, Any, Exception], None]):
+    def set_handler(self, handler: Callable[[AndroidClient, Any, Exception], bool]):
         """
         This method set callback for the task, it will be called when a task is interrupted by an exception.
-        Implement a function with sign [(AndroidClient, ClientTask, Exception) -> None] to handle exception.
+        Implement a function with sign [(AndroidClient, ClientTask, Exception) -> bool] to handle exception.
         """
         self.handler = handler
 
