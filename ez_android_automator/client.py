@@ -439,6 +439,7 @@ class PushAccountTask(ClientTask):
             f'tar -xf {self.to_path}/{self.tar_name}.tar.gz',
             f'cp -r {self.to_path}/{self.from_path}/{self.tar_name} {self.from_packagename}',
             f'rm -r {self.to_path}/{self.from_path}/{self.tar_name}',
+            f'chmod 777 -R {self.from_packagename}/{self.tar_name}',
         ]
         script_content = "#!/bin/bash\n\n" + "\n".join(commands) + "\n"
         with open(self.sh_name, "w", newline='\n', encoding='utf-8') as file:
