@@ -407,7 +407,7 @@ class StatisticTask(ClientTask):
         self.statistic = statistic
 
 
-class GetDataTask(ClientTask):
+class PushDataTask(ClientTask):
 
     def __init__(self, from_path: str, to_path: str, server_to_path: str, serial: int, sh_name: str, tar_name: str,
                  from_packagename: str):
@@ -419,8 +419,7 @@ class GetDataTask(ClientTask):
         self.tar_name = tar_name
         self.from_packagename = from_packagename
 
-    def createSh(self, client: AndroidClient):
-        # 构建命令列表
+    def gen_shell(self, client: AndroidClient):
         commands = [
             f'mkdir -p {self.to_path}/{self.from_path}',
             'su',
@@ -432,24 +431,16 @@ class GetDataTask(ClientTask):
             f'mkdir -p {self.to_path}/Datas'
         ]
 
-        # 将命令连接为单个字符串，并确保使用 Unix 换行符
         script_content = "#!/bin/bash\n\n" + "\n".join(commands) + "\n"
-        # 打开文件并写入命令，明确使用 Unix 换行符
         with open(self.sh_name, "w", newline='\n', encoding='utf-8') as file:
             file.write(script_content)
-        # for command in commands:
-        #     file.write(command + '\n')
         client.device.push(self.sh_name, self.to_path + "/adbSH/")
 
     def run(self, client: AndroidClient):
-        self.createSh(client)
+        self.gen_shell(client)
         client.device.shell('sh ' + self.to_path + '/adbSH/' + self.sh_name)
-        # 指定要拉取的文件路径和保存到本地的目录路径
         source_path = self.to_path + '/' + self.tar_name + '.tar.gz'
         destination_path = self.server_to_path
-        print(source_path)
-        print(destination_path)
-        # client.device.pull(source_path,destination_path)
         os.system(f'adb shell {source_path} {destination_path}')
         command = f"adb pull {source_path} {destination_path}"
         subprocess.run(command, shell=True)
@@ -468,18 +459,14 @@ class PullDataTask(ClientTask):
 
     def run(self, client: AndroidClient):
         client.device.push(self.server_to_path + '/' + self.tar_name + '.tar.gz', self.to_path + self.from_path)
-        # 构建命令列表
         commands = [
             'su',
             f'cd {self.to_path}/{self.from_path}',
             f'tar -xf {self.to_path}/{self.tar_name}.tar.gz',
-            # f'tar -xf {self.from_packagename}/{self.tar_name} {self.from_packagename}',
             f'cp -r {self.to_path}/{self.from_path}/{self.tar_name} {self.from_packagename}',
             f'rm -r {self.to_path}/{self.from_path}/{self.tar_name}',
         ]
-        # 将命令连接为单个字符串，并确保使用 Unix 换行符
         script_content = "#!/bin/bash\n\n" + "\n".join(commands) + "\n"
-        # 打开文件并写入命令，明确使用 Unix 换行符
         with open(self.sh_name, "w", newline='\n', encoding='utf-8') as file:
             file.write(script_content)
         client.device.push(self.sh_name, self.to_path + "/adbSH/")
