@@ -1,15 +1,14 @@
 """
-@Time: 2024/5/22 17:00
+@Time: 2024/6/16 14:30
 @Auth: coin
 @Email: 918731093@qq.com
-@File: weibo_task.py
+@File: toutiao_task.py
 @IDE: PyCharm
-@Motto：one coin
+@Motto: one coin
 """
 import time
-
 from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, \
-    PhoneLoginTask, WaitCallBackStage, TaskAsStage
+    PhoneLoginTask, WaitCallBackStage, StatisticTask, PullDataTask, TaskAsStage
 from ez_android_automator.idm_task import IDMPullTask
 
 
@@ -19,9 +18,10 @@ class OpenAppStage(Stage):
         super().__init__(serial)
 
     def run(self, client: PublishClient):
-        client.restart_app("com.sina.weibo", self.clear_data)
+        client.restart_app("com.ss.android.article.news", self.clear_data)
         if self.clear_data:
-            client.wait_to_click({'text': '同意并继续'})
+            client.wait_to_click({'text': '同意'})
+            client.wait_to_click({'text': '关闭'})
 
 
 class BeforeLoginStage(Stage):
@@ -30,10 +30,12 @@ class BeforeLoginStage(Stage):
         self.phone = phone
 
     def run(self, client: AndroidClient):
-        client.wait_to_click({"content-desc": "我"})
-        client.wait_to_click({"text": "手机号"})
+        client.wait_to_click({"text": "我的"})
+        client.wait_to_click({"text": "其他登录方式"})
+        client.wait_to_click({"text": "手机登录"})
         client.device.send_keys(self.phone)
         client.wait_to_click({"text": "获取验证码"})
+        client.wait_to_click({"text": "同意并继续"})
 
 
 class PhoneAuthCodeStage(Stage):
@@ -43,8 +45,6 @@ class PhoneAuthCodeStage(Stage):
 
     def run(self, client: AndroidClient):
         client.device.send_keys(self.code)
-        client.wait_to_click({"text": "同意并登录"})
-        client.wait_to_click({"NAF": "true"})
 
     def code_callback(self, code: str):
         self.code = code
@@ -52,37 +52,34 @@ class PhoneAuthCodeStage(Stage):
 
 class PressPublishButtonStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({"resource-id": "com.sina.weibo:id/home_bar_right_tv1"})
-        client.wait_to_click({"text": "视频"})
+        client.wait_to_click({"text": "发布"})
 
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
+        client.wait_to_click({'content-desc': '添加图片'})
         time.sleep(1)
-        client.device.click(495, 270)
-        client.wait_to_click({'text': '下一步(1)'})
-        client.wait_to_click({'text': '下一步'})
-        client.wait_to_click({'text': '确定'})
+        client.device.click(390, 380)
+        client.wait_to_click({'text': '完成'})
 
 
 class SetVideoOptionsStage(Stage):
-    def __init__(self, serial, title: str, content: str):
+    def __init__(self, serial, content: str, title=None):
         super().__init__(serial)
-        self.title = title
         self.content = content
+        self.title = title
 
     def run(self, client: PublishClient):
-        client.wait_to_click({"text": "分享新鲜事..."})
+        client.wait_to_click({"text": "说点什么…"})
         client.device.send_keys(self.content)
-        client.wait_to_click({"text": "原创"})
-        client.wait_to_click({"text": "填写标题能获得更多关注"})
+        client.wait_to_click({"text": "添加标题"})
         client.device.send_keys(self.title)
-        client.wait_to_click({"text": "发送"})
+        client.wait_to_click({"text": "发布"})
 
 
-class WeiboPublishVideoTask(PublishTask):
+class ToutiaoPublishVideoTask(PublishTask):
     """
-    Publish a video on Weibo.
+    Publish a video on Toutiao.
     """
 
     def __init__(self, priority: int, title: str, content: str, video: str):
@@ -92,10 +89,10 @@ class WeiboPublishVideoTask(PublishTask):
         self.stages.append(OpenAppStage(1))
         self.stages.append(PressPublishButtonStage(2))
         self.stages.append(ChooseFirstVideoStage(3))
-        self.stages.append(SetVideoOptionsStage(4, self.title, self.content))
+        self.stages.append(SetVideoOptionsStage(4, self.content, self.title))
 
 
-class WeiboPhoneLoginTask(PhoneLoginTask):
+class ToutiaoPhoneLoginTask(PhoneLoginTask):
     def __init__(self, phone: str):
         super().__init__(phone)
         self.stages.append(OpenAppStage(0, True))

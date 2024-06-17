@@ -49,7 +49,7 @@ def parse_coordinates(bounds: str):
     return x1, x2, y1, y2
 
 
-class ClientWaitTimeout(Exception):
+class ClientWaitTimeout(TimeoutError):
     def __init__(self):
         super().__init__("Client wait too long to do detection on this task.")
 
@@ -271,13 +271,13 @@ class Stage:
         return self.stage_serial
 
 
-class CallbackWaitTimeoutException(Exception):
+class CallbackWaitTimeoutException(TimeoutError):
     def __init__(self, stage_serial):
         super().__init__(f"Wait too long on this callback. Stage:{stage_serial}")
 
 
 class ClientTask:
-    def __init__(self):
+    def __init__(self, priority: int = 3):
         self.stages = list[Stage]()
         self.current_stage = -1
         self.exception = None
@@ -286,6 +286,7 @@ class ClientTask:
         self.callback = None
         self.callback: TaskCallback
         self.handler = None
+        self.priority = priority
 
     def run(self, client: AndroidClient):
         try:
@@ -301,6 +302,9 @@ class ClientTask:
         self.finished = True
         if self.callback is not None:
             self.callback(self)
+
+    def __lt__(self, other):
+        return self.priority < other.priority
 
     def get_stage(self):
         return self.current_stage
@@ -329,6 +333,12 @@ class ClientTask:
         """
         self.handler = handler
 
+    def shift_down_priority(self):
+        self.current_stage = -1
+        self.exception = None
+        self.finished = False
+        self.priority += 1
+
 
 class PublishTask(ClientTask):
     """
@@ -336,19 +346,11 @@ class PublishTask(ClientTask):
     """
 
     def __init__(self, priority: int, title: str, content: str, video: str, photo: str):
-        super().__init__()
-        self.priority = priority
+        super().__init__(priority)
         self.title = title
         self.content = content
         self.video = video
         self.photo = photo
-
-    def shift_down_priority(self):
-        self.current_stage = -1
-        self.exception = None
-        self.finished = False
-        self.exception: Exception
-        self.priority += 1
 
 
 class LoginTask(ClientTask):
@@ -404,7 +406,8 @@ class StatisticTask(ClientTask):
 
 
 class PullDataTask(ClientTask):
-    def __init__(self, from_package_name: str, from_path: str, sh_name: str, to_path: str, server_to_path: str, tar_name:str):
+    def __init__(self, from_package_name: str, from_path: str, sh_name: str, to_path: str, server_to_path: str,
+                 tar_name: str):
         super().__init__()
         self.from_package_name = from_package_name
         self.from_path = from_path
@@ -459,6 +462,15 @@ class StatisticFetcher(ClientTask):
 
 
 class TaskAsStage(Stage):
-    def __init__(self, stage_serial: int):
-        super().__init__(stage_serial)
+    """
+    Use task as a stage. With this, you can combine tasks dependent on each others together.
+    """
 
+    def __init__(self, stage_serial: int, task: ClientTask):
+        super().__init__(stage_serial)
+        self.task = task
+
+    def run(self, client: AndroidClient):
+        self.task.run(client)
+        if self.task.is_exception():
+            raise self.task.exception

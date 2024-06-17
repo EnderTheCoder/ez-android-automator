@@ -1,4 +1,6 @@
-from .client import PublishClient, ClientTask, Stage, AndroidClient
+import time
+
+from .client import PublishClient, ClientTask, Stage, AndroidClient, CallbackWaitTimeoutException, ClientWaitTimeout
 
 
 class OpenAppStage(Stage):
@@ -18,6 +20,10 @@ class InputStage(Stage):
         client.device.send_keys(self.url)
         client.wait_to_click({'text': '连接'})
         client.wait_to_click({'text': '开始'})
+        try:
+            client.wait_to_click({'text': '确认'})
+        except ClientWaitTimeout:
+            pass
 
 
 class WaitFinishStage(Stage):
@@ -26,7 +32,21 @@ class WaitFinishStage(Stage):
         self.timeout = timeout
 
     def run(self, client: AndroidClient):
-        pass
+        time_start = time.time()
+
+        single = None
+        while single is None:
+            client.refresh_xml()
+            lst = client.find_xml_by_attr({'resource-id': 'idm.internet.download.manager.plus:id/progressView'})
+            if len(lst) == 0:
+                raise Exception(
+                    'No download progress view found in list. '
+                    'This is probably caused by download task is not successfully created.'
+                )
+            single = lst[0].find(attrs={'text': '完成'})
+            if time.time() - time_start > self.timeout:
+                raise ClientWaitTimeout()
+            time.sleep(0.1)
 
 
 class IDMPullTask(ClientTask):

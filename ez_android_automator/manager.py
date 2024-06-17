@@ -21,7 +21,7 @@ class Manager:
     def add_client(self, _client: client.AndroidClient):
         self.clients[_client.device.address] = _client
 
-    def push_task(self, task: client.PublishTask):
+    def push_task(self, task: client.ClientTask):
         self.tasks.put((task.priority, task))
 
     def set_max_priority(self, priority: int):
@@ -39,20 +39,20 @@ class Manager:
                 for _client in self.clients.values():
                     if _client.is_usable():
                         task = self.tasks.get()
-                        _client.set_task(task)
+                        _client.set_task(task[1])
 
                         def failure_callback(__client: client.AndroidClient):
                             __client.task.shift_down_priority()
                             if __client.task.priority > self.max_priority:
                                 self.push_task(__client.task)
 
-                        threading.Thread(target=_client.run_current_task, args=(_client, failure_callback)).start()
+                        threading.Thread(target=_client.run_current_task, args=(failure_callback,)).start()
                     else:
                         self.idle_task()
                         pass
 
-    def run_asynchronously(self):
-        threading.Thread(target=self.run, args=(self,)).start()
+    def start(self):
+        threading.Thread(target=self.run).start()
 
     def maintain_clients(self):
         """
@@ -61,7 +61,7 @@ class Manager:
         :return: None
         """
         for serial in self.clients.keys():
-            if not self.clients[serial].alive():
+            if not self.clients[serial].alive:
                 warnings.warn(f'Client {serial} disconnected.')
                 del self.clients[serial]
 
