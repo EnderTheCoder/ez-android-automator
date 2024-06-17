@@ -156,15 +156,17 @@ class BilibiliPhoneLoginTask(PhoneLoginTask):
         self.stages.append(auth_stage)
 
 
-class BilibiliGetAccountTaskAccount(PushAccountTask):
-    def __init__(self, client: AndroidClient, from_packagename: str, from_path: str, sh_name: str, to_path: str, server_to_path: str,
+class BilibiliPushAccountAccount(PushAccountTask):
+    def __init__(self, client: AndroidClient, from_packagename: str, from_path: str, sh_name: str, to_path: str,
+                 server_to_path: str,
                  tar_name: str):
         super().__init__(from_packagename, from_path, sh_name, to_path, server_to_path, tar_name)
         self.stages.append(self.run(client=client))
 
 
-class BilibiliTranAccountTaskAccount(PullAccountTask):
-    def __init__(self, client: AndroidClient,from_packagename: str, from_path: str, sh_name: str, to_path: str, server_to_path: str,
+class BilibiliPullAccountTask(PullAccountTask):
+    def __init__(self, client: AndroidClient, from_packagename: str, from_path: str, sh_name: str, to_path: str,
+                 server_to_path: str,
                  tar_name: str):
-        super().__init__(from_path,to_path,server_to_path,0,sh_name,tar_name,from_packagename)
+        super().__init__(from_path, to_path, server_to_path, 0, sh_name, tar_name, from_packagename)
         self.stages.append(self.run(client=client))
