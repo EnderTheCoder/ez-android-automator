@@ -208,16 +208,6 @@ class PublishClient(AndroidClient):
     def __init__(self, device: uiautomator2.Device):
         super().__init__(device)
 
-    def copy_media_to_gallery(self, media_path):
-        """
-        Copy file to target's gallery.
-        """
-
-        gallery_path = "/sdcard/DCIM/Camera/"
-        remote_path = gallery_path + media_path.split('/')[-1]
-        self.device.push(media_path, remote_path)
-        self.device.shell(f'am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file://{remote_path}')
-
 
 class Stage:
     """
@@ -346,7 +336,7 @@ class PasswordLoginTask(LoginTask):
     def __init__(self, account: str, password: str):
         """
         :param account: Can be username or phone number, depends on real situations.
-        :param password: Password used to login on apps.
+        :param password: Password used to log in on apps.
         """
         self.account = account
         self.password = password
