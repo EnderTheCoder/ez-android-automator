@@ -33,16 +33,12 @@ class WaitFinishStage(Stage):
 
     def run(self, client: AndroidClient):
         time_start = time.time()
-
         single = None
         while single is None:
             client.refresh_xml()
             lst = client.find_xml_by_attr({'resource-id': 'idm.internet.download.manager.plus:id/progressView'})
             if len(lst) == 0:
-                raise Exception(
-                    'No download progress view found in list. '
-                    'This is probably caused by download task is not successfully created.'
-                )
+                continue
             single = lst[0].find(attrs={'text': '完成'})
             if time.time() - time_start > self.timeout:
                 raise ClientWaitTimeout()
