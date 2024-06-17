@@ -8,7 +8,6 @@
 
 This file contains ez_android_automator classes and helper functions relating Client, Task and Exception.
 """
-import os
 import subprocess
 import threading
 import warnings
