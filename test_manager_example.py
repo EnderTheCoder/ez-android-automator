@@ -2,7 +2,7 @@
 @Time: 2024/1/15 18:22
 @Auth: EnderTheCoder
 @Email: ggameinvader@gmail.com
-@File: example.py
+@File: test_manager_example.py
 @IDE: PyCharm
 @Motto：The only one true Legendary Grandmaster.
 """
@@ -14,11 +14,11 @@ from ez_android_automator.xhs_task import XhsPublishVideoTask
 
 # extend class to create your own callback. create callback class for each task class.
 # bind callback to your task.
-def success():
+def success(_client, _task):
     print("we did it.")
 
 
-def fail():
+def fail(_client, _task, _exception):
     print("we failed.")
 
 
