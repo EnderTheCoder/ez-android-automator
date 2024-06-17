@@ -249,9 +249,10 @@ class ClientTask:
         self.callback: Callable
         self.handler = None
         self.priority = priority
+        self.sub_task = False
 
     def run(self, client: AndroidClient):
-        if self.handler is None:
+        if self.handler is None and not self.sub_task:
             warnings.warn(f'Handler for task {type(self).__name__} has not been implemented yet.'
                           'This may cause a crash when using manager to dispatch tasks.')
         for i, stage in enumerate(self.stages):
@@ -500,6 +501,7 @@ class TaskAsStage(Stage):
     def __init__(self, stage_serial: int, task: ClientTask):
         super().__init__(stage_serial)
         self.task = task
+        self.task.sub_task = True
 
     def run(self, client: AndroidClient):
         self.task.run(client)
