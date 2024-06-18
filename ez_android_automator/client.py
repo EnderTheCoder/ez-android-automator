@@ -246,8 +246,8 @@ class ClientTask:
         self.finished = False
         self.exception: Exception
         self.callback: Callable
-        self.callback: Callable
         self.handler = None
+        self.handler: Callable
         self.priority = priority
         self.sub_task = False
 
