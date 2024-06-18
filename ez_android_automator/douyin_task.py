@@ -8,7 +8,7 @@
 """
 import time
 from ez_android_automator.client import Stage, PublishTask, PublishClient, AndroidClient, \
-    PhoneLoginTask, WaitCallBackStage, PasswordLoginTask, ClientWaitTimeout, TaskAsStage
+    PhoneLoginTask, WaitCallBackStage, PasswordLoginTask, ClientWaitTimeout, TaskAsStage, StatisticTask
 from ez_android_automator.idm_task import IDMPullTask
 
 
@@ -101,6 +101,37 @@ class PasswordLoginStage(Stage):
             client.device.send_keys(self.password)
             client.wait_to_click({'text': '登录'})
             client.wait_to_click({'text': '同意并登录'})
+
+
+class StatisticCenterStage(Stage):
+    def run(self, client: AndroidClient):
+        time.sleep(7)  # wait for ad to be finished
+        client.wait_to_click({'text': '我'})
+        client.wait_to_click({'text': '查看更多'})
+        client.wait_to_click({'text': '抖音创作者中心'})
+        client.wait_to_click({'text': '更多作品'})
+
+
+class GetStatisticStage(Stage):
+    def __init__(self, stage_serial: int, video_title: str, statistic_callback: callable):
+        super().__init__(stage_serial)
+        self.video_title = video_title
+        self.statistic_callback = statistic_callback
+
+    def run(self, client: AndroidClient):
+        client.wait_until_found({'text': self.video_title})  # wait for list to be loaded
+
+
+class DouyinStatisticTask(StatisticTask):
+    def __init__(self, video_title):
+        super().__init__()
+        self.statistic = None
+        self.append(OpenAppStage(0))
+        self.append(StatisticCenterStage(1))
+        self.append(GetStatisticStage(2, video_title, self.statistic_callback))
+
+    def statistic_callback(self, statistic: dict):
+        self.statistic = statistic
 
 
 class DouyinVideoPublishTask(PublishTask):
