@@ -123,7 +123,6 @@ class BilibiliStatisticTask(StatisticTask):
     def __init__(self, video_title):
         super().__init__()
         self.statistic = None
-        # self.append(TaskAsStage(0, ))
         self.append(OpenAppStage(1))
         self.append(StatisticCenterStage(2))
         self.append(GetStatisticStage(3, video_title, self.statistic_callback))
@@ -157,7 +156,7 @@ class BilibiliPhoneLoginTask(PhoneLoginTask):
         self.stages.append(auth_stage)
 
 
-class BilibiliPushAccountAccount(PushAccountTask):
+class BilibiliPushAccountTask(PushAccountTask):
     def __init__(self, client: AndroidClient, from_packagename: str, from_path: str, sh_name: str, to_path: str,
                  server_to_path: str,
                  tar_name: str):
