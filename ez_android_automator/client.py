@@ -160,14 +160,14 @@ class AndroidClient:
 
         self.wait_until_finish(bool_lambda, timeout=timeout)
 
-    def run_current_task(self, failure_callback: callable = None, clear_task: bool = True):
+    def run_current_task(self, failure_callback: Callable = None, clear_task: bool = True):
         self.task.run(self)
         if not self.task.is_finished and failure_callback is not None:
             failure_callback(self)
         if clear_task:
             self.task = None
 
-    def run_current_task_async(self, failure_callback: callable = None, clear_task: bool = True):
+    def run_current_task_async(self, failure_callback: Callable = None, clear_task: bool = True):
         threading.Thread(target=self.run_current_task, args=(failure_callback, clear_task,)).start()
 
     def set_task(self, task):
