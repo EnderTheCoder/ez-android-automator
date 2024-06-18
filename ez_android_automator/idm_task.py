@@ -1,6 +1,6 @@
 import time
 
-from .client import PublishClient, ClientTask, Stage, AndroidClient, CallbackWaitTimeoutException, ClientWaitTimeout
+from .client import PublishClient, ClientTask, Stage, AndroidClient, ClientWaitTimeout
 
 
 class OpenAppStage(Stage):
