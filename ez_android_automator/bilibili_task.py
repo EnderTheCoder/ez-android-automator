@@ -8,9 +8,9 @@
 """
 import time
 
-from ez_android_automator.client import Stage, PublishClient, AndroidClient, PublishTask, \
+from .client import Stage, PublishClient, AndroidClient, PublishTask, \
     PhoneLoginTask, WaitCallBackStage, StatisticTask, PushAccountTask, TaskAsStage, PullAccountTask
-from ez_android_automator.idm_task import IDMPullTask
+from .idm_task import IDMPullTask
 
 
 class OpenAppStage(Stage):
