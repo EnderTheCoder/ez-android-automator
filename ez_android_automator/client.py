@@ -233,7 +233,7 @@ class CallbackWaitTimeoutException(TimeoutError):
 class InvalidStageSerialException(Exception):
     def __init__(self, stage):
         super().__init__(f"Invalid stage serial for stage '{type(stage).__name__}'."
-                         " Using a wrong stage serial can cause unexpected execution sequence for stages in a task."
+                         "Using a wrong stage serial can cause unexpected execution sequence for stages in a task."
                          "Assign valid stage serial in [0, n-1]")
 
 
