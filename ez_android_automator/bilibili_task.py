@@ -7,6 +7,7 @@
 @Motto: one coin
 """
 import time
+from typing import Callable
 
 from .client import Stage, PublishClient, AndroidClient, PublishTask, \
     PhoneLoginTask, WaitCallBackStage, StatisticTask, PushAccountTask, TaskAsStage, PullAccountTask
@@ -82,7 +83,7 @@ class StatisticCenterStage(Stage):
 
 
 class GetStatisticStage(Stage):
-    def __init__(self, stage_serial: int, video_title: str, statistic_callback: callable):
+    def __init__(self, stage_serial: int, video_title: str, statistic_callback: Callable):
         super().__init__(stage_serial)
         self.video_title = video_title
         self.statistic_callback = statistic_callback

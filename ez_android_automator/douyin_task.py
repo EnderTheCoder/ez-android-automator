@@ -7,6 +7,8 @@
 @Motto：one coin
 """
 import time
+from typing import Callable
+
 from ez_android_automator.client import Stage, PublishTask, PublishClient, AndroidClient, \
     PhoneLoginTask, WaitCallBackStage, PasswordLoginTask, ClientWaitTimeout, TaskAsStage, StatisticTask
 from ez_android_automator.idm_task import IDMPullTask
@@ -113,7 +115,7 @@ class StatisticCenterStage(Stage):
 
 
 class GetStatisticStage(Stage):
-    def __init__(self, stage_serial: int, video_title: str, statistic_callback: callable):
+    def __init__(self, stage_serial: int, video_title: str, statistic_callback: Callable):
         super().__init__(stage_serial)
         self.video_title = video_title
         self.statistic_callback = statistic_callback
