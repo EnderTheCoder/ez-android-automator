@@ -58,7 +58,10 @@ class AppFilePkg(object):
     def push(self, local_dir, file_name, client: AndroidClient, save_storage: bool = True):
         """
         Push file from server to client.
-
+        :param local_dir: a local directory to find files and extract them.
+        :param file_name: data from client will be read from 2 file: <file_name>.json and <file_name>.tar.gz.
+        :param client: client to execute this push function.
+        :param save_storage: whether to del tmp files in tend to save storage.
         """
         local_tmp_dir_path = str(os.path.join(local_dir, file_name))
         if not os.path.exists(local_tmp_dir_path):
