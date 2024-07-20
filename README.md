@@ -2,6 +2,12 @@
 
 一个基于uiautomator2的安卓自动化项目，使用beautifulsoup来解析xml，并且提供外部可以调用的HTTP API
 
+## 注意事项
+
+本项目的核心库由开发者EnderTheCoder维护，保证第一优先级修复问题和提高代码质量。
+
+其余派生任务类可能由于人力问题无法得到妥善维护，欢迎贡献PR。
+
 ## adb证书
 
 adbkey和adbkey.pub两个文件是adb证书，如果想要连接到机器上，需要把这两个文件替换到windows的`C://Users/用户名/.android/`目录下，或者linux的`/home/用户名/.android/`目录下

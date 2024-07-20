@@ -96,6 +96,12 @@ class AndroidClient:
         """
         self.device.shell('am start -n {}/{}.main.MainActivity'.format(package_name, package_name))
 
+    def su_shell(self, cmd):
+        """
+        Execute command as root user. Use only on rooted clients.
+        """
+        self.device.shell(f"su -c {cmd}")
+
     def dump_xml(self):
         return self.device.dump_hierarchy()
 
