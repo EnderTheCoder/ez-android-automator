@@ -13,7 +13,6 @@ import json
 import os
 import shutil
 import tarfile
-import time
 from typing import Union
 
 from ez_android_automator.client import AndroidClient, ClientTask, Stage
@@ -46,25 +45,31 @@ class AppFilePkg(object):
         :param save_storage: whether to del tmp files in tend to save storage.
         """
         local_tmp_dir_path = str(os.path.join(root_dir, file_name))
-        os.makedirs(local_tmp_dir_path, exist_ok=True)
-        json_exported = False
+        remote_tmp_dir_path = str(os.path.join(self.base_remote_tmp_path, file_name))
         try:
-            for local_path, remote_path in self.path_mappings.items():
-                local_tmp_file_path = os.path.join(local_tmp_dir_path, local_path)
-                client.pull(remote_path, local_tmp_file_path)
+            os.makedirs(local_tmp_dir_path, exist_ok=True)
+            client.mkdir(remote_tmp_dir_path)
+            json_exported = False
+            for arc_name, remote_path in self.path_mappings.items():
+                local_tmp_file_path = os.path.join(local_tmp_dir_path, arc_name)
+                client.su_shell(['cp', '-r', remote_path, os.path.join(remote_tmp_dir_path, arc_name)])
+                client.su_shell(['chmod', '777', '-R', os.path.join(remote_tmp_dir_path, arc_name)])
+                client.pull(os.path.join(remote_tmp_dir_path, arc_name), local_tmp_dir_path, True)
                 with tarfile.open(os.path.join(root_dir, file_name) + '.tar.gz', mode='w:gz') as tar:
-                    tar.add(local_tmp_file_path, arcname=local_path)
+                    tar.add(local_tmp_file_path, arcname=arc_name)
                     if not json_exported:
                         json_exported = True
                         json_path = os.path.join(local_tmp_dir_path, '.package_info.json')
                         with open(json_path, 'w') as json_f:
                             json.dump(self.dict(), json_f)
-                            tar.add(json_path, arcname=local_path)
+                            tar.add(json_path, arcname=arc_name)
+            if save_storage:
+                shutil.rmtree(local_tmp_dir_path)
+            client.rmdir(remote_tmp_dir_path)
         except Exception as e:
             shutil.rmtree(local_tmp_dir_path)  # clear tmp file dir if the client failed to pull.
+            client.rmdir(remote_tmp_dir_path)
             raise e
-        if save_storage:
-            shutil.rmtree(local_tmp_dir_path)
 
     def push(self, root_dir, file_name, client: AndroidClient, save_storage: bool = False):
         """
@@ -75,19 +80,25 @@ class AppFilePkg(object):
         :param save_storage: whether to del tmp files in tend to save storage.
         """
         local_tmp_dir_path = str(os.path.join(root_dir, file_name))
-        if not os.path.exists(local_tmp_dir_path):
-            with tarfile.open(f'{file_name}.tar.gz', mode='r:gz') as tar_ref:
-                tar_ref.extractall(local_tmp_dir_path)
         remote_tmp_dir_path = str(os.path.join(self.base_remote_tmp_path, file_name))
-        client.device.shell(f'mkdir {self.base_remote_tmp_path}')
-        client.device.shell(f'mkdir {self.base_remote_tmp_path}/{file_name}')
-        for arc_name, remote_path in self.path_mappings.items():
-            client.push(os.path.join(local_tmp_dir_path, arc_name), os.path.join(remote_tmp_dir_path, arc_name))
-            client.su_shell(f'mv {os.path.join(remote_tmp_dir_path, arc_name)} {remote_path}')
-            client.su_shell(f'chmod 777 -R {remote_path}')
-        client.device.shell(f'rm {remote_tmp_dir_path}')
-        if save_storage:
-            shutil.rmtree(local_tmp_dir_path)
+        try:
+            if not os.path.exists(local_tmp_dir_path):
+                with tarfile.open(f'{file_name}.tar.gz', mode='r:gz') as tar_ref:
+                    tar_ref.extractall(local_tmp_dir_path)
+            client.device.shell(f'mkdir {self.base_remote_tmp_path}')
+            client.device.shell(f'mkdir {self.base_remote_tmp_path}/{file_name}')
+            for arc_name, remote_path in self.path_mappings.items():
+                client.push(os.path.join(local_tmp_dir_path, arc_name), os.path.join(remote_tmp_dir_path, arc_name))
+                client.su_shell(f'mv {os.path.join(remote_tmp_dir_path, arc_name)} {remote_path}')
+                client.su_shell(f'chmod 777 -R {remote_path}')
+            client.device.shell(f'rm {remote_tmp_dir_path}')
+            if save_storage:
+                shutil.rmtree(local_tmp_dir_path)
+            client.rmdir(remote_tmp_dir_path)
+        except Exception as e:
+            shutil.rmtree(local_tmp_dir_path)  # clear tmp file dir if the client failed to pull.
+            client.rmdir(remote_tmp_dir_path)
+            raise e
 
 
 class PullStage(Stage):

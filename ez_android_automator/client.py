@@ -9,8 +9,6 @@
 This file contains ez_android_automator classes and helper functions relating Client, Task and Exception.
 """
 import os
-import shutil
-import subprocess
 import threading
 import warnings
 from typing import Callable, Any, Union
@@ -98,46 +96,56 @@ class AndroidClient:
         """
         self.device.shell('am start -n {}/{}.main.MainActivity'.format(package_name, package_name))
 
+    def shell(self, cmd: Union[str, list[str]], su: bool = False):
+        if su:
+            return self.su_shell(cmd)
+        else:
+            return self.device.shell(cmd)
+
     def su_shell(self, cmd: Union[str, list[str]]):
         """
         Execute command as root user. Use only on rooted clients.
         """
         if isinstance(cmd, str):
-            self.device.shell(f"su -c {cmd}")
+            return self.device.shell(f"su -c {cmd}")
         elif isinstance(cmd, list):
-            self.device.shell(['su', '-c'] + cmd)
+            return self.device.shell(['su', '-c'] + cmd)
 
-    def is_symbolic_link(self, path: str) -> bool:
-        ret = self.device.shell(['file', path]).output.strip()
+    def is_symbolic_link(self, path: str, su: bool = False) -> bool:
+        ret = self.shell(['file', path], su).output.strip()
         if ret == f'{path}: cannot open':
             raise FileNotFoundError(path)
         return ret == f'{path}: symbolic link'
 
-    def mkdir(self, path: str):
-        self.device.shell(['mkdir', path])
+    def mkdir(self, path: str, su: bool = False):
+        self.shell(['mkdir', path], su)
 
-    def exists(self, path: str):
+    def rmdir(self, path: str, su: bool = False, force: bool = False):
+        self.shell(['rm', '-r', '-f' if force else None, path], su)
+
+    def exists(self, path: str, su: bool = False):
         try:
-            self.is_file(path)
+            self.is_file(path, su)
             return True
         except FileNotFoundError:
             return False
 
-    def is_file(self, path: str) -> bool:
+    def is_file(self, path: str, su: bool = False) -> bool:
         """
         Test if a path is file.
         Args:
             path (str): path to be teste.d
+            su: use superuser
         Returns:
              True if the path is file, False is directory.
         Raises:
             FileNotFoundError
         """
-        ret = self.device.shell(['file', path]).output.strip()
+        ret = self.shell(['file', path], su).output.strip()
         if ret == f'{path}: cannot open':
             raise FileNotFoundError(path)
         if ret == f'{path}: symbolic link':
-            next_path = self.device.shell(['readlink', path]).output.strip()
+            next_path = self.shell(['readlink', path], su).output.strip()
             if next_path == path:
                 raise RuntimeError(f'Recursive symbolic link detected on path {path}')
             return self.is_file(next_path)
@@ -146,39 +154,40 @@ class AndroidClient:
     def is_dir(self, path: str) -> bool:
         return not self.is_file(path)
 
-    def ls(self, path: str) -> list[str]:
+    def ls(self, path: str, su: bool = False) -> list[str]:
         """
         List files in a directory.
         Raises:
             RuntimeError
         """
-        if self.is_file(path):
+        if self.is_file(path, su):
             raise RuntimeError(f'Path {path} is a file.')
         res = []
-        for output in self.device.shell(['ls', path]).output.split('\n'):
+        for output in self.shell(['ls', path], su).output.split('\n'):
             if output != '':
                 res.append(output.strip())
         return res
 
-    def pull(self, src: str, dst: str) -> None:
+    def pull(self, src: str, dst: str, su: bool = False) -> None:
         basename = os.path.basename(src)
-        if self.is_file(src):
+
+        if self.is_file(src, su):
             self.device.pull(src, os.path.join(dst, basename))
         else:
             os.makedirs(os.path.join(dst, basename), exist_ok=True)
-            for file_name in self.ls(src):
+            for file_name in self.ls(src, su):
                 next_path = os.path.join(src, file_name)
-                self.pull(next_path, os.path.join(dst, basename))
+                self.pull(next_path, os.path.join(dst, basename), su)
 
-    def push(self, src: str, dst: str) -> None:
+    def push(self, src: str, dst: str, su: bool = False) -> None:
         basename = os.path.basename(src)
         if os.path.isfile(src):
             self.device.push(src, os.path.join(dst, basename))
         else:
-            self.mkdir(os.path.join(dst, basename))
+            self.mkdir(os.path.join(dst, basename), su)
             for file_name in os.listdir(src):
                 next_path = os.path.join(src, file_name)
-                self.push(next_path, os.path.join(dst, basename))
+                self.push(next_path, os.path.join(dst, basename), su)
 
     def dump_xml(self):
         return self.device.dump_hierarchy()
@@ -458,11 +467,6 @@ class StatisticTask(ClientTask):
 
     def statistic_callback(self, statistic: dict):
         self.statistic = statistic
-
-
-
-
-
 
 
 class WaitCallBackStage(Stage):

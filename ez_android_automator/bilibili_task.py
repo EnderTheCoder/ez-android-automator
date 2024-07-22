@@ -10,8 +10,9 @@ import time
 from typing import Callable
 
 from .client import Stage, PublishClient, AndroidClient, PublishTask, \
-    PhoneLoginTask, WaitCallBackStage, StatisticTask, PushAccountTask, TaskAsStage, PullAccountTask
+    PhoneLoginTask, WaitCallBackStage, StatisticTask, TaskAsStage
 from .idm_task import IDMPullTask
+from .app_file import PullAccountTask, AppFilePkg
 
 
 class OpenAppStage(Stage):
@@ -155,17 +156,9 @@ class BilibiliPhoneLoginTask(PhoneLoginTask):
         self.stages.append(auth_stage)
 
 
-class BilibiliPushAccountTask(PushAccountTask):
-    def __init__(self, client: AndroidClient, from_packagename: str, from_path: str, sh_name: str, to_path: str,
-                 server_to_path: str,
-                 tar_name: str):
-        super().__init__(from_packagename, from_path, sh_name, to_path, server_to_path, tar_name)
-        self.stages.append(self.run(client=client))
-
-
-class BilibiliPullAccountTask(PullAccountTask):
-    def __init__(self, client: AndroidClient, from_packagename: str, from_path: str, sh_name: str, to_path: str,
-                 server_to_path: str,
-                 tar_name: str):
-        super().__init__(from_path, to_path, server_to_path, 0, sh_name, tar_name, from_packagename)
-        self.stages.append(self.run(client=client))
+class BilibiliFilePkg(AppFilePkg):
+    def __init__(self):
+        super().__init__('tv.danmaku.bili', time.time(), {
+            'app_account': '/data/data/tv.danmaku.bili/app_account',
+            'files': '/data/data/tv.danmaku.bili/files'
+        })
