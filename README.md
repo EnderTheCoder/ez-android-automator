@@ -17,11 +17,12 @@
 
 以下模块由EnderTheCoder维护
 
-| 模块 | 用途 |
-| ----------- | ----------- |
-| [app_file](ez_android_automator/app_file.py)     | 用于在root过的设备上实现自动化保存和恢复APP的登陆状态 |
-| [client](ez_android_automator/client.py)   | 核心库，项目的大部分内容所在 |
+| 模块                                           | 用途                               |
+|----------------------------------------------|----------------------------------|
+| [app_file](ez_android_automator/app_file.py) | 用于在root过的设备上实现自动化保存和恢复APP的登陆状态   |
+| [client](ez_android_automator/client.py)     | 核心库，项目的大部分内容所在                   |
 | [idm_task](ez_android_automator/idm_task.py) | 一个简单的任务，用于向没有root的设备上传输文件并立即刷新相册 |
+| [manager](ez_android_automator/manager.py)   | 任务调度器，用于向多设备分发多任务，实现异步调用和异常处理    |
 
 项目原本目的用于媒体矩阵，包含很多遗留的过时测试脚本和任务，请忽略以test_开头的文件。
 
