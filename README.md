@@ -16,9 +16,10 @@
 其余派生任务类可能由于人力问题无法得到妥善维护，欢迎贡献PR。
 | 模块      | 用途 |
 | ----------- | ----------- |
-| app_file      | 用于在root过的设备上实现自动化保存和恢复APP的登陆状态       |
-| client   | 核心库，项目的大部分内容所在 |
-| idm_task | 一个简单的任务，用于向没有root的设备上传输文件并立即刷新相册 |
+| [app_file](ez_android_automator/app_file.py)     | 用于在root过的设备上实现自动化保存和恢复APP的登陆状态       |
+| [client](ez_android_automator/client.py)   | 核心库，项目的大部分内容所在 |
+| [idm_task](ez_android_automator/idm_task.py) | 一个简单的任务，用于向没有root的设备上传输文件并立即刷新相册 |
+
 ## 切换adb模式方法
 
 adb在开机的时候默认运行在usb模式下，我们无法通过ip地址连接到机器，所以需要切换到tcpip模式下。
