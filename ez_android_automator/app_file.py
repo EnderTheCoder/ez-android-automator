@@ -89,6 +89,7 @@ class AppFilePkg(object):
             client.device.shell(f'mkdir {self.base_remote_tmp_path}/{file_name}')
             for arc_name, remote_path in self.path_mappings.items():
                 client.push(os.path.join(local_tmp_dir_path, arc_name), os.path.join(remote_tmp_dir_path, arc_name))
+                client.rmdir(remote_path, True, True)
                 client.su_shell(f'mv {os.path.join(remote_tmp_dir_path, arc_name)} {remote_path}')
                 client.su_shell(f'chmod 777 -R {remote_path}')
             client.device.shell(f'rm {remote_tmp_dir_path}')

@@ -159,6 +159,5 @@ class BilibiliPhoneLoginTask(PhoneLoginTask):
 class BilibiliFilePkg(AppFilePkg):
     def __init__(self):
         super().__init__('tv.danmaku.bili', time.time(), {
-            'app_account': '/data/data/tv.danmaku.bili/app_account',
-            'files': '/data/data/tv.danmaku.bili/files'
+            'app_account': '/data/data/tv.danmaku.bili/app_account'
         })
