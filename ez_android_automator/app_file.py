@@ -10,13 +10,15 @@ Provide helper classes and functions for uploading or downloading app data files
 """
 import json
 import os
+import shutil
 import tarfile
+from typing import Union
 
 from ez_android_automator.client import AndroidClient
 
 
 class AppFilePkg(object):
-    def __init__(self, pkg_name: str, create_time: float, path_mappings: dict):
+    def __init__(self, pkg_name: Union[str, None], create_time: float, path_mappings: dict):
         self.pkg_name = pkg_name  # app package name
         self.create_time = create_time
         self.path_mappings = path_mappings  # arc_name --> remote_path
@@ -32,7 +34,7 @@ class AppFilePkg(object):
             'path_mappings': self.path_mappings
         })
 
-    def pull(self, local_dir, file_name, client: AndroidClient, save_storage: bool = True):
+    def pull(self, local_dir, file_name, client: AndroidClient, save_storage: bool = False):
         """
         Pull file from client to server.
         :warning: the `file_name` param provided should not be duplicated. It is recommended to use random file name.
@@ -44,18 +46,18 @@ class AppFilePkg(object):
         local_tmp_dir_path = str(os.path.join(local_dir, file_name))
         os.makedirs(local_tmp_dir_path, exist_ok=True)
         try:
-            for local_path, remote_path in self.path_mappings:
+            for local_path, remote_path in self.path_mappings.items():
                 local_tmp_file_path = os.path.join(local_tmp_dir_path, local_path)
                 client.device.pull(remote_path, local_tmp_file_path)
                 with tarfile.open(os.path.join(local_dir, file_name) + '.tar.gz', mode='w:gz') as tar:
                     tar.add(local_tmp_file_path, arcname=local_path)
         except Exception as e:
-            os.rmdir(local_tmp_dir_path)  # clear tmp file dir if the client failed to pull.
+            shutil.rmtree(local_tmp_dir_path)  # clear tmp file dir if the client failed to pull.
             raise e
         if save_storage:
-            os.rmdir(local_tmp_dir_path)
+            shutil.rmtree(local_tmp_dir_path)
 
-    def push(self, local_dir, file_name, client: AndroidClient, save_storage: bool = True):
+    def push(self, local_dir, file_name, client: AndroidClient, save_storage: bool = False):
         """
         Push file from server to client.
         :param local_dir: a local directory to find files and extract them.
@@ -70,13 +72,13 @@ class AppFilePkg(object):
         remote_tmp_dir_path = str(os.path.join(self.base_remote_tmp_path, file_name))
         client.device.shell(f'mkdir {self.base_remote_tmp_path}')
         client.device.shell(f'mkdir {self.base_remote_tmp_path}/{file_name}')
-        for arc_name, remote_path in self.path_mappings:
+        for arc_name, remote_path in self.path_mappings.items():
             client.device.push(os.path.join(local_tmp_dir_path, arc_name), os.path.join(remote_tmp_dir_path, arc_name))
             client.su_shell(f'mv {os.path.join(remote_tmp_dir_path, arc_name)} {remote_path}')
             client.su_shell(f'chmod 777 -R {remote_path}')
         client.device.shell(f'rm {remote_tmp_dir_path}')
         if save_storage:
-            os.rmdir(local_tmp_dir_path)
+            shutil.rmtree(local_tmp_dir_path)
 
 
 def load_from_files(json_path, tar_path) -> AppFilePkg:

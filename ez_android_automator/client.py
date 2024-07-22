@@ -8,6 +8,7 @@
 
 This file contains ez_android_automator classes and helper functions relating Client, Task and Exception.
 """
+import shutil
 import subprocess
 import threading
 import warnings
@@ -101,6 +102,38 @@ class AndroidClient:
         Execute command as root user. Use only on rooted clients.
         """
         self.device.shell(f"su -c {cmd}")
+
+    def is_file(self, path: str) -> bool:
+        """
+        Test if a path is file.
+        Args:
+            path (str): path to be teste.d
+        Returns:
+             True if the path is file, False is directory.
+        Raises:
+            FileNotFoundError
+        """
+        ret = self.device.shell(['file', path]).output
+        if 'cannot open' in ret:
+            raise FileNotFoundError(path)
+        return ret != f'{path}: directory\n'
+
+    def is_dir(self, path: str) -> bool:
+        return not self.is_file(path)
+
+    def ls(self, path: str) -> list[str]:
+        """
+        List files in a directory.
+        Raises:
+            RuntimeError
+        """
+        if self.is_file(path):
+            raise RuntimeError(f'Path {path} is a file.')
+        res = []
+        for output in self.device.shell(['ls', path]).output.split('\n'):
+            if output != '':
+                res.append(output.strip())
+        return res
 
     def dump_xml(self):
         return self.device.dump_hierarchy()
