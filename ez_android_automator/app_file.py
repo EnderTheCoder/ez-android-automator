@@ -48,7 +48,7 @@ class AppFilePkg(object):
         try:
             for local_path, remote_path in self.path_mappings.items():
                 local_tmp_file_path = os.path.join(local_tmp_dir_path, local_path)
-                client.device.pull(remote_path, local_tmp_file_path)
+                client.pull(remote_path, local_tmp_file_path)
                 with tarfile.open(os.path.join(local_dir, file_name) + '.tar.gz', mode='w:gz') as tar:
                     tar.add(local_tmp_file_path, arcname=local_path)
         except Exception as e:
@@ -73,7 +73,7 @@ class AppFilePkg(object):
         client.device.shell(f'mkdir {self.base_remote_tmp_path}')
         client.device.shell(f'mkdir {self.base_remote_tmp_path}/{file_name}')
         for arc_name, remote_path in self.path_mappings.items():
-            client.device.push(os.path.join(local_tmp_dir_path, arc_name), os.path.join(remote_tmp_dir_path, arc_name))
+            client.push(os.path.join(local_tmp_dir_path, arc_name), os.path.join(remote_tmp_dir_path, arc_name))
             client.su_shell(f'mv {os.path.join(remote_tmp_dir_path, arc_name)} {remote_path}')
             client.su_shell(f'chmod 777 -R {remote_path}')
         client.device.shell(f'rm {remote_tmp_dir_path}')

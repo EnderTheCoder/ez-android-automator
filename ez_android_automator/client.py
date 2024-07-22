@@ -8,11 +8,12 @@
 
 This file contains ez_android_automator classes and helper functions relating Client, Task and Exception.
 """
+import os
 import shutil
 import subprocess
 import threading
 import warnings
-from typing import Callable, Any
+from typing import Callable, Any, Union
 
 import bs4
 import uiautomator2
@@ -91,17 +92,36 @@ class AndroidClient:
 
     def start_app_am(self, package_name: str):
         """
-        Start app using Activity Manager. Used only when app_start() failed to work.
+        Start app using Activity Manager. Used only when app_start() failed to function.
         :param package_name: package name of the app
         :return: None
         """
         self.device.shell('am start -n {}/{}.main.MainActivity'.format(package_name, package_name))
 
-    def su_shell(self, cmd):
+    def su_shell(self, cmd: Union[str, list[str]]):
         """
         Execute command as root user. Use only on rooted clients.
         """
-        self.device.shell(f"su -c {cmd}")
+        if isinstance(cmd, str):
+            self.device.shell(f"su -c {cmd}")
+        elif isinstance(cmd, list):
+            self.device.shell(['su', '-c'] + cmd)
+
+    def is_symbolic_link(self, path: str) -> bool:
+        ret = self.device.shell(['file', path]).output.strip()
+        if ret == f'{path}: cannot open':
+            raise FileNotFoundError(path)
+        return ret == f'{path}: symbolic link'
+
+    def mkdir(self, path: str):
+        self.device.shell(['mkdir', path])
+
+    def exists(self, path: str):
+        try:
+            self.is_file(path)
+            return True
+        except FileNotFoundError:
+            return False
 
     def is_file(self, path: str) -> bool:
         """
@@ -113,10 +133,15 @@ class AndroidClient:
         Raises:
             FileNotFoundError
         """
-        ret = self.device.shell(['file', path]).output
-        if 'cannot open' in ret:
+        ret = self.device.shell(['file', path]).output.strip()
+        if ret == f'{path}: cannot open':
             raise FileNotFoundError(path)
-        return ret != f'{path}: directory\n'
+        if ret == f'{path}: symbolic link':
+            next_path = self.device.shell(['readlink', path]).output.strip()
+            if next_path == path:
+                raise RuntimeError(f'Recursive symbolic link detected on path {path}')
+            return self.is_file(next_path)
+        return ret != f'{path}: directory'
 
     def is_dir(self, path: str) -> bool:
         return not self.is_file(path)
@@ -134,6 +159,26 @@ class AndroidClient:
             if output != '':
                 res.append(output.strip())
         return res
+
+    def pull(self, src: str, dst: str) -> None:
+        basename = os.path.basename(src)
+        if self.is_file(src):
+            self.device.pull(src, os.path.join(dst, basename))
+        else:
+            os.makedirs(os.path.join(dst, basename), exist_ok=True)
+            for file_name in self.ls(src):
+                next_path = os.path.join(src, file_name)
+                self.pull(next_path, os.path.join(dst, basename))
+
+    def push(self, src: str, dst: str) -> None:
+        basename = os.path.basename(src)
+        if os.path.isfile(src):
+            self.device.push(src, os.path.join(dst, basename))
+        else:
+            self.mkdir(os.path.join(dst, basename))
+            for file_name in os.listdir(src):
+                next_path = os.path.join(src, file_name)
+                self.push(next_path, os.path.join(dst, basename))
 
     def dump_xml(self):
         return self.device.dump_hierarchy()
