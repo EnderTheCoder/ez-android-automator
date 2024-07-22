@@ -135,6 +135,9 @@ class PushAccountTask(ClientTask):
 
 
 def load_from_files(dir_path) -> AppFilePkg:
+    """
+    Load pkg using this function when try to upload an app pkg that already exists.
+    """
     json_path = os.path.join(dir_path, '.package_info.json')
     if not os.path.exists(dir_path):
         raise FileNotFoundError(dir_path)
