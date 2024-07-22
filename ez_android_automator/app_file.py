@@ -7,6 +7,7 @@
 @Motto：The only one true Legendary Grandmaster.
 
 Provide helper classes and functions for uploading or downloading app data files from android client.
+Remember to use rooted devices to upload/download app data files in /data/data dir.
 """
 import json
 import os
@@ -103,7 +104,7 @@ class PullStage(Stage):
 
 class PullAccountTask(ClientTask):
     """
-    Pull account data files from client to server.
+    Pull account data files from client to server. Use only on rooted devices.
     """
 
     def __init__(self, pkg: AppFilePkg, root_dir: str, file_name: str, save_storage: bool = False):
@@ -125,7 +126,7 @@ class PushStage(Stage):
 
 class PushAccountTask(ClientTask):
     """
-    Push account data files from server to client.
+    Push account data files from server to client. Use only on rooted devices.
     """
 
     def __init__(self, pkg: AppFilePkg, root_dir: str, file_name: str, save_storage: bool = False):
