@@ -85,14 +85,14 @@ class AppFilePkg(object):
             if not os.path.exists(local_tmp_dir_path):
                 with tarfile.open(f'{file_name}.tar.gz', mode='r:gz') as tar_ref:
                     tar_ref.extractall(local_tmp_dir_path)
-            client.device.shell(f'mkdir {self.base_remote_tmp_path}')
-            client.device.shell(f'mkdir {self.base_remote_tmp_path}/{file_name}')
+            client.mkdir(self.base_remote_tmp_path)
+            client.mkdir(os.path.join(self.base_remote_tmp_path, file_name))
             for arc_name, remote_path in self.path_mappings.items():
-                client.push(os.path.join(local_tmp_dir_path, arc_name), os.path.join(remote_tmp_dir_path, arc_name))
+                client.push(os.path.join(local_tmp_dir_path, arc_name), remote_tmp_dir_path)
                 client.rmdir(remote_path, True, True)
                 client.su_shell(f'mv {os.path.join(remote_tmp_dir_path, arc_name)} {remote_path}')
                 client.su_shell(f'chmod 777 -R {remote_path}')
-            client.device.shell(f'rm {remote_tmp_dir_path}')
+            client.rmdir(remote_tmp_dir_path)
             if save_storage:
                 shutil.rmtree(local_tmp_dir_path)
             client.rmdir(remote_tmp_dir_path)
