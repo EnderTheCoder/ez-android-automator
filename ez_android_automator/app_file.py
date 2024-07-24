@@ -27,7 +27,7 @@ class AppFilePkg(object):
         elif isinstance(path_mappings, list):
             self.path_mappings = {}
             for path_mapping in path_mappings:
-                self.path_mappings[path_mapping] = os.path.join('/data/data', pkg_name, path_mapping)
+                self.path_mappings[path_mapping] = posix_path_join('/data/data', pkg_name, path_mapping)
         self.base_remote_tmp_path = '/sdcard/tmp'
 
     def add_path_mapping(self, pkg_path, original_path):
@@ -49,8 +49,8 @@ class AppFilePkg(object):
         :param client: client to execute this pull function.
         :param save_storage: whether to del tmp files in tend to save storage.
         """
-        local_tmp_dir_path = str(os.path.join(root_dir, file_name))
-        remote_tmp_dir_path = str(os.path.join(self.base_remote_tmp_path, file_name))
+        local_tmp_dir_path = str(posix_path_join(root_dir, file_name))
+        remote_tmp_dir_path = str(posix_path_join(self.base_remote_tmp_path, file_name))
         try:
             if os.path.exists(local_tmp_dir_path):
                 shutil.rmtree(local_tmp_dir_path)
@@ -60,15 +60,15 @@ class AppFilePkg(object):
             json_exported = False
             for arc_name, remote_path in self.path_mappings.items():
                 arc_name = os.path.basename(arc_name)
-                local_tmp_file_path = os.path.join(local_tmp_dir_path, arc_name)
-                client.su_shell(['cp', '-r', remote_path, os.path.join(remote_tmp_dir_path, arc_name)])
-                client.su_shell(['chmod', '777', '-R', os.path.join(remote_tmp_dir_path, arc_name)])
-                client.pull(os.path.join(remote_tmp_dir_path, arc_name), local_tmp_dir_path, True)
-                with tarfile.open(os.path.join(root_dir, file_name) + '.tar.gz', mode='w:gz') as tar:
+                local_tmp_file_path = posix_path_join(local_tmp_dir_path, arc_name)
+                client.su_shell(['cp', '-r', remote_path, posix_path_join(remote_tmp_dir_path, arc_name)])
+                client.su_shell(['chmod', '777', '-R', posix_path_join(remote_tmp_dir_path, arc_name)])
+                client.pull(posix_path_join(remote_tmp_dir_path, arc_name), local_tmp_dir_path, True)
+                with tarfile.open(posix_path_join(root_dir, file_name) + '.tar.gz', mode='w:gz') as tar:
                     tar.add(local_tmp_file_path, arcname=arc_name)
                     if not json_exported:
                         json_exported = True
-                        json_path = os.path.join(local_tmp_dir_path, '.package_info.json')
+                        json_path = posix_path_join(local_tmp_dir_path, '.package_info.json')
                         with open(json_path, 'w') as json_f:
                             json.dump(self.dict(), json_f)
                             tar.add(json_path)
@@ -90,21 +90,21 @@ class AppFilePkg(object):
         :param client: client to execute this push function.
         :param save_storage: whether to del tmp files in tend to save storage.
         """
-        local_tmp_dir_path = str(os.path.join(root_dir, file_name))
-        remote_tmp_dir_path = str(os.path.join(self.base_remote_tmp_path, file_name))
+        local_tmp_dir_path = str(posix_path_join(root_dir, file_name))
+        remote_tmp_dir_path = str(posix_path_join(self.base_remote_tmp_path, file_name))
         try:
             if not os.path.exists(local_tmp_dir_path):
                 with tarfile.open(f'{file_name}.tar.gz', mode='r:gz') as tar_ref:
                     tar_ref.extractall(local_tmp_dir_path)
             if not client.exists(self.base_remote_tmp_path):
                 client.mkdir(self.base_remote_tmp_path)
-            client.mkdir(os.path.join(self.base_remote_tmp_path, file_name), exists_ok=True)
+            client.mkdir(posix_path_join(self.base_remote_tmp_path, file_name), exists_ok=True)
             for arc_name, remote_path in self.path_mappings.items():
                 arc_name = os.path.basename(arc_name)
-                client.push(os.path.join(local_tmp_dir_path, arc_name), remote_tmp_dir_path)
+                client.push(posix_path_join(local_tmp_dir_path, arc_name), remote_tmp_dir_path)
                 if client.exists(remote_path):
                     client.rmdir(remote_path, True, True)
-                client.shell(f'mv {os.path.join(remote_tmp_dir_path, arc_name)} {remote_path}', su=True, print_ret=True)
+                client.shell(f'mv {posix_path_join(remote_tmp_dir_path, arc_name)} {remote_path}', su=True, print_ret=True)
                 client.shell(f'chmod 777 -R {remote_path}', su=True, print_ret=True)
             client.rmdir(remote_tmp_dir_path)
             if save_storage:
@@ -182,7 +182,7 @@ def load_from_files(dir_path) -> AppFilePkg:
     """
     Load pkg using this function when try to upload an app pkg that already exists.
     """
-    json_path = os.path.join(dir_path, '.package_info.json')
+    json_path = posix_path_join(dir_path, '.package_info.json')
     if not os.path.exists(dir_path):
         raise FileNotFoundError(dir_path)
     if not os.path.exists(json_path):

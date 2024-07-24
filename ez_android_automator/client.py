@@ -10,7 +10,6 @@ This file contains ez_android_automator classes and helper functions relating Cl
 """
 import os
 import threading
-import urllib
 import warnings
 from typing import Callable, Any, Union
 
@@ -18,6 +17,7 @@ import bs4
 import uiautomator2
 from bs4 import BeautifulSoup
 import time
+from util import posix_path_join
 
 
 def create_network_client(addr):
@@ -188,26 +188,26 @@ class AndroidClient:
         if self.is_file(src, su):
             print(src)
             try:
-                self.device.pull(src, os.path.join(dst, basename))
+                self.device.pull(src, posix_path_join(dst, basename))
             except FileNotFoundError as e:
                 if not skip_not_found:
                     raise e
         else:
-            os.makedirs(os.path.join(dst, basename), exist_ok=True)
+            os.makedirs(posix_path_join(dst, basename), exist_ok=True)
             for file_name in self.ls(src, su):
-                next_path = os.path.join(src, file_name)
-                self.pull(next_path, os.path.join(dst, basename), su)
+                next_path = posix_path_join(src, file_name)
+                self.pull(next_path, posix_path_join(dst, basename), su)
 
     def push(self, src: str, dst: str, su: bool = False) -> None:
         basename = os.path.basename(src)
         if os.path.isfile(src):
             print(src)
-            self.device.push(src, os.path.join(dst, basename))
+            self.device.push(src, posix_path_join(dst, basename))
         else:
-            self.mkdir(os.path.join(dst, basename), su, exists_ok=True)
+            self.mkdir(posix_path_join(dst, basename), su, exists_ok=True)
             for file_name in os.listdir(src):
-                next_path = os.path.join(src, file_name)
-                self.push(next_path, os.path.join(dst, basename), su)
+                next_path = posix_path_join(src, file_name)
+                self.push(next_path, posix_path_join(dst, basename), su)
 
     def dump_xml(self):
         return self.device.dump_hierarchy()
