@@ -15,7 +15,8 @@ import shutil
 import tarfile
 from typing import Union
 
-from ez_android_automator.client import AndroidClient, ClientTask, Stage, StopAppStage, ClearAppStage
+from .client import AndroidClient, ClientTask, Stage, StopAppStage, ClearAppStage
+from .util import posix_path_join
 
 
 class AppFilePkg(object):
@@ -104,7 +105,8 @@ class AppFilePkg(object):
                 client.push(posix_path_join(local_tmp_dir_path, arc_name), remote_tmp_dir_path)
                 if client.exists(remote_path):
                     client.rmdir(remote_path, True, True)
-                client.shell(f'mv {posix_path_join(remote_tmp_dir_path, arc_name)} {remote_path}', su=True, print_ret=True)
+                client.shell(f'mv {posix_path_join(remote_tmp_dir_path, arc_name)} {remote_path}', su=True,
+                             print_ret=True)
                 client.shell(f'chmod 777 -R {remote_path}', su=True, print_ret=True)
             client.rmdir(remote_tmp_dir_path)
             if save_storage:
