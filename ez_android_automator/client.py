@@ -157,7 +157,7 @@ class AndroidClient:
             FileNotFoundError
         """
         ret = self.shell(['file', path], su).output.strip()
-        if ret == f'{path}: cannot open':
+        if ': cannot open' in ret:
             raise FileNotFoundError(path)
         if ret == f'{path}: symbolic link':
             next_path = self.shell(['readlink', path], su).output.strip()
