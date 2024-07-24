@@ -17,7 +17,7 @@ import bs4
 import uiautomator2
 from bs4 import BeautifulSoup
 import time
-from util import posix_path_join
+from .util import posix_path_join
 
 
 def create_network_client(addr):
