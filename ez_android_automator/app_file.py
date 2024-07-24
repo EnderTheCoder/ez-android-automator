@@ -15,14 +15,19 @@ import shutil
 import tarfile
 from typing import Union
 
-from ez_android_automator.client import AndroidClient, ClientTask, Stage
+from ez_android_automator.client import AndroidClient, ClientTask, Stage, StopAppStage
 
 
 class AppFilePkg(object):
-    def __init__(self, pkg_name: Union[str, None], create_time: float, path_mappings: dict[str, str]):
+    def __init__(self, pkg_name: Union[str, None], create_time: float, path_mappings: Union[list[str], dict[str, str]]):
         self.pkg_name = pkg_name  # app package name
         self.create_time = create_time
-        self.path_mappings = path_mappings  # arc_name --> remote_path
+        if isinstance(path_mappings, dict):
+            self.path_mappings = path_mappings  # arc_name --> remote_path
+        elif isinstance(path_mappings, list):
+            self.path_mappings = {}
+            for path_mapping in path_mappings:
+                self.path_mappings[path_mapping] = os.path.join('/data/data', pkg_name, path_mapping)
         self.base_remote_tmp_path = '/sdcard/tmp'
 
     def add_path_mapping(self, pkg_path, original_path):
@@ -47,10 +52,14 @@ class AppFilePkg(object):
         local_tmp_dir_path = str(os.path.join(root_dir, file_name))
         remote_tmp_dir_path = str(os.path.join(self.base_remote_tmp_path, file_name))
         try:
-            os.makedirs(local_tmp_dir_path, exist_ok=True)
-            client.mkdir(remote_tmp_dir_path)
+            if os.path.exists(local_tmp_dir_path):
+                shutil.rmtree(local_tmp_dir_path)
+            os.makedirs(local_tmp_dir_path, exist_ok=False)
+            if not client.exists(remote_tmp_dir_path):
+                client.mkdir(remote_tmp_dir_path)
             json_exported = False
             for arc_name, remote_path in self.path_mappings.items():
+                arc_name = os.path.basename(arc_name)
                 local_tmp_file_path = os.path.join(local_tmp_dir_path, arc_name)
                 client.su_shell(['cp', '-r', remote_path, os.path.join(remote_tmp_dir_path, arc_name)])
                 client.su_shell(['chmod', '777', '-R', os.path.join(remote_tmp_dir_path, arc_name)])
@@ -62,13 +71,15 @@ class AppFilePkg(object):
                         json_path = os.path.join(local_tmp_dir_path, '.package_info.json')
                         with open(json_path, 'w') as json_f:
                             json.dump(self.dict(), json_f)
-                            tar.add(json_path, arcname=arc_name)
+                            tar.add(json_path)
             if save_storage:
                 shutil.rmtree(local_tmp_dir_path)
-            client.rmdir(remote_tmp_dir_path)
+            if client.exists(remote_tmp_dir_path):
+                client.rmdir(remote_tmp_dir_path)
         except Exception as e:
             shutil.rmtree(local_tmp_dir_path)  # clear tmp file dir if the client failed to pull.
-            client.rmdir(remote_tmp_dir_path)
+            if client.exists(remote_tmp_dir_path):
+                client.rmdir(remote_tmp_dir_path)
             raise e
 
     def push(self, root_dir, file_name, client: AndroidClient, save_storage: bool = False):
@@ -85,20 +96,24 @@ class AppFilePkg(object):
             if not os.path.exists(local_tmp_dir_path):
                 with tarfile.open(f'{file_name}.tar.gz', mode='r:gz') as tar_ref:
                     tar_ref.extractall(local_tmp_dir_path)
-            client.mkdir(self.base_remote_tmp_path)
-            client.mkdir(os.path.join(self.base_remote_tmp_path, file_name))
+            if not client.exists(self.base_remote_tmp_path):
+                client.mkdir(self.base_remote_tmp_path)
+            client.mkdir(os.path.join(self.base_remote_tmp_path, file_name), exists_ok=True)
             for arc_name, remote_path in self.path_mappings.items():
+                arc_name = os.path.basename(arc_name)
                 client.push(os.path.join(local_tmp_dir_path, arc_name), remote_tmp_dir_path)
-                client.rmdir(remote_path, True, True)
-                client.su_shell(f'mv {os.path.join(remote_tmp_dir_path, arc_name)} {remote_path}')
-                client.su_shell(f'chmod 777 -R {remote_path}')
+                if client.exists(remote_path):
+                    client.rmdir(remote_path, True, True)
+                client.shell(f'mv {os.path.join(remote_tmp_dir_path, arc_name)} {remote_path}', su=True, print_ret=True)
+                client.shell(f'chmod 777 -R {remote_path}', su=True, print_ret=True)
             client.rmdir(remote_tmp_dir_path)
             if save_storage:
                 shutil.rmtree(local_tmp_dir_path)
-            client.rmdir(remote_tmp_dir_path)
+            if client.exists(remote_tmp_dir_path):
+                client.rmdir(remote_tmp_dir_path)
         except Exception as e:
-            shutil.rmtree(local_tmp_dir_path)  # clear tmp file dir if the client failed to pull.
-            client.rmdir(remote_tmp_dir_path)
+            if client.exists(remote_tmp_dir_path):  # clear tmp file dir if the client failed to push.
+                client.rmdir(remote_tmp_dir_path)
             raise e
 
 
@@ -119,9 +134,17 @@ class PullAccountTask(ClientTask):
     Pull account data files from client to server. Use only on rooted devices.
     """
 
-    def __init__(self, pkg: AppFilePkg, root_dir: str, file_name: str, save_storage: bool = False):
+    def __init__(self,
+                 pkg: AppFilePkg,
+                 root_dir: str,
+                 file_name: str,
+                 save_storage: bool = False,
+                 stop_before_push: bool = True):
         super().__init__()
-        self.append(PullStage(0, pkg, root_dir, file_name, save_storage))
+        if stop_before_push:
+            self.append(StopAppStage(0, pkg.pkg_name))
+        self.append(PullStage(1, pkg, root_dir, file_name, save_storage))
+        self.auto_serial()
 
 
 class PushStage(Stage):
@@ -141,9 +164,17 @@ class PushAccountTask(ClientTask):
     Push account data files from server to client. Use only on rooted devices.
     """
 
-    def __init__(self, pkg: AppFilePkg, root_dir: str, file_name: str, save_storage: bool = False):
+    def __init__(self,
+                 pkg: AppFilePkg,
+                 root_dir: str,
+                 file_name: str,
+                 save_storage: bool = False,
+                 stop_before_push: bool = True):
         super().__init__()
-        self.append(PushStage(0, pkg, root_dir, file_name, save_storage))
+        if stop_before_push:
+            self.append(StopAppStage(0, pkg.pkg_name))
+        self.append(PushStage(1, pkg, root_dir, file_name, save_storage))
+        self.auto_serial()
 
 
 def load_from_files(dir_path) -> AppFilePkg:

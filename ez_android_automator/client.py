@@ -10,6 +10,7 @@ This file contains ez_android_automator classes and helper functions relating Cl
 """
 import os
 import threading
+import urllib
 import warnings
 from typing import Callable, Any, Union
 
@@ -96,11 +97,16 @@ class AndroidClient:
         """
         self.device.shell('am start -n {}/{}.main.MainActivity'.format(package_name, package_name))
 
-    def shell(self, cmd: Union[str, list[str]], su: bool = False):
+    def shell(self, cmd: Union[str, list[str]], su: bool = False, print_ret: bool = False):
         if su:
-            return self.su_shell(cmd)
+            ret = self.su_shell(cmd)
         else:
-            return self.device.shell(cmd)
+            ret = self.device.shell(cmd)
+        if ret.exit_code != 0:
+            raise RuntimeError('Shell exit code not zero: {}'.format(ret.exit_code))
+        if print_ret:
+            print(ret.output)
+        return ret
 
     def su_shell(self, cmd: Union[str, list[str]]):
         """
@@ -117,11 +123,20 @@ class AndroidClient:
             raise FileNotFoundError(path)
         return ret == f'{path}: symbolic link'
 
-    def mkdir(self, path: str, su: bool = False):
-        self.shell(['mkdir', path], su)
+    def mkdir(self, path: str, su: bool = False, exists_ok: bool = False):
+        if self.exists(path):
+            if not exists_ok:
+                raise FileExistsError(path)
+        else:
+            self.shell(['mkdir', path], su)
 
     def rmdir(self, path: str, su: bool = False, force: bool = False):
-        self.shell(['rm', '-r', '-f' if force else None, path], su)
+        if not self.exists(path):
+            raise FileNotFoundError(path)
+        cmd_lst = ['rm', '-r', path]
+        if force:
+            cmd_lst.insert(1, '-f')
+        self.shell(cmd_lst, su)
 
     def exists(self, path: str, su: bool = False):
         try:
@@ -168,11 +183,15 @@ class AndroidClient:
                 res.append(output.strip())
         return res
 
-    def pull(self, src: str, dst: str, su: bool = False) -> None:
+    def pull(self, src: str, dst: str, su: bool = False, skip_not_found: bool = True) -> None:
         basename = os.path.basename(src)
-
         if self.is_file(src, su):
-            self.device.pull(src, os.path.join(dst, basename))
+            print(src)
+            try:
+                self.device.pull(src, os.path.join(dst, basename))
+            except FileNotFoundError as e:
+                if not skip_not_found:
+                    raise e
         else:
             os.makedirs(os.path.join(dst, basename), exist_ok=True)
             for file_name in self.ls(src, su):
@@ -182,9 +201,10 @@ class AndroidClient:
     def push(self, src: str, dst: str, su: bool = False) -> None:
         basename = os.path.basename(src)
         if os.path.isfile(src):
+            print(src)
             self.device.push(src, os.path.join(dst, basename))
         else:
-            self.mkdir(os.path.join(dst, basename), su)
+            self.mkdir(os.path.join(dst, basename), su, exists_ok=True)
             for file_name in os.listdir(src):
                 next_path = os.path.join(src, file_name)
                 self.push(next_path, os.path.join(dst, basename), su)
@@ -403,6 +423,10 @@ class ClientTask:
         self.finished = False
         self.priority += 1
 
+    def auto_serial(self):
+        for i, stage in enumerate(self.stages):
+            stage.stage_serial = i
+
 
 class PublishTask(ClientTask):
     """
@@ -540,3 +564,12 @@ class CombinedSequentialTask(ClientTask):
         super().__init__()
         for i, task in enumerate(args):
             self.append(TaskAsStage(i, task))
+
+
+class StopAppStage(Stage):
+    def __init__(self, stage_serial: int, pkg_name: str):
+        super().__init__(stage_serial)
+        self.pkg_name = pkg_name
+
+    def run(self, client: AndroidClient):
+        client.device.app_stop(self.pkg_name)
