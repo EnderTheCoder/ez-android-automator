@@ -15,7 +15,7 @@ import shutil
 import tarfile
 from typing import Union
 
-from ez_android_automator.client import AndroidClient, ClientTask, Stage, StopAppStage
+from ez_android_automator.client import AndroidClient, ClientTask, Stage, StopAppStage, ClearAppStage
 
 
 class AppFilePkg(object):
@@ -173,7 +173,8 @@ class PushAccountTask(ClientTask):
         super().__init__()
         if stop_before_push:
             self.append(StopAppStage(0, pkg.pkg_name))
-        self.append(PushStage(1, pkg, root_dir, file_name, save_storage))
+        self.append(ClearAppStage(1, pkg.pkg_name))
+        self.append(PushStage(2, pkg, root_dir, file_name, save_storage))
         self.auto_serial()
 
 

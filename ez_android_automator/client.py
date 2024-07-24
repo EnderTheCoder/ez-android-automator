@@ -573,3 +573,21 @@ class StopAppStage(Stage):
 
     def run(self, client: AndroidClient):
         client.device.app_stop(self.pkg_name)
+
+
+class StartAppStage(Stage):
+    def __init__(self, stage_serial: int, pkg_name: str):
+        super().__init__(stage_serial)
+        self.pkg_name = pkg_name
+
+    def run(self, client: AndroidClient):
+        client.device.app_start(self.pkg_name)
+
+
+class ClearAppStage(Stage):
+    def __init__(self, stage_serial: int, pkg_name: str):
+        super().__init__(stage_serial)
+        self.pkg_name = pkg_name
+
+    def run(self, client: AndroidClient):
+        client.device.app_clear(self.pkg_name)
