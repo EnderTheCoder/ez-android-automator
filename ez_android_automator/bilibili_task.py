@@ -161,3 +161,6 @@ class BilibiliFilePkg(AppFilePkg):
         super().__init__('tv.danmaku.bili', time.time(), [
             'shared_prefs', 'app_blkv', 'files', 'cache', 'app_device_settings', 'databases', 'app_account'
         ])
+
+
+bilibili_file_pkg = BilibiliFilePkg()
