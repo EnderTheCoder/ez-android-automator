@@ -183,20 +183,20 @@ class AndroidClient:
                 res.append(output.strip())
         return res
 
-    def pull(self, src: str, dst: str, su: bool = False, skip_not_found: bool = True) -> None:
+    def pull(self, src: str, dst: str, su: bool = False, skip_not_found: bool = False) -> None:
         basename = os.path.basename(src)
-        if self.is_file(src, su):
-            print(src)
-            try:
+        try:
+            if self.is_file(src, su):
+                print(src)
                 self.device.pull(src, posix_path_join(dst, basename))
-            except FileNotFoundError as e:
-                if not skip_not_found:
-                    raise e
-        else:
-            os.makedirs(posix_path_join(dst, basename), exist_ok=True)
-            for file_name in self.ls(src, su):
-                next_path = posix_path_join(src, file_name)
-                self.pull(next_path, posix_path_join(dst, basename), su)
+            else:
+                os.makedirs(posix_path_join(dst, basename), exist_ok=True)
+                for file_name in self.ls(src, su):
+                    next_path = posix_path_join(src, file_name)
+                    self.pull(next_path, posix_path_join(dst, basename), su)
+        except FileNotFoundError as e:
+            if not skip_not_found:
+                raise e
 
     def push(self, src: str, dst: str, su: bool = False) -> None:
         basename = os.path.basename(src)
