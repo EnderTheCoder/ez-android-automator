@@ -64,7 +64,7 @@ class AppFilePkg(object):
                 local_tmp_file_path = posix_path_join(local_tmp_dir_path, arc_name)
                 client.su_shell(['cp', '-r', remote_path, posix_path_join(remote_tmp_dir_path, arc_name)])
                 client.su_shell(['chmod', '777', '-R', posix_path_join(remote_tmp_dir_path, arc_name)])
-                client.pull(posix_path_join(remote_tmp_dir_path, arc_name), local_tmp_dir_path, True)
+                client.pull(posix_path_join(remote_tmp_dir_path, arc_name), local_tmp_dir_path, True, True)
                 with tarfile.open(posix_path_join(root_dir, file_name) + '.tar.gz', mode='w:gz') as tar:
                     tar.add(local_tmp_file_path, arcname=arc_name)
                     if not json_exported:
