@@ -322,6 +322,9 @@ class AndroidClient:
     def intercept_xml(self, when: Callable[[BeautifulSoup], bool], do: Callable):
         self.xml_interceptors[when] = do
 
+    def clear_xml_interceptors(self):
+        self.xml_interceptors = {}
+
 
 class PublishClient(AndroidClient):
     """
