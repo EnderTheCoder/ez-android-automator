@@ -68,6 +68,7 @@ class AndroidClient:
     """
 
     def __init__(self, device: uiautomator2.Device):
+        self.parser = None
         self.rs = None
         self.device = device
         self.xml = ''
@@ -75,6 +76,8 @@ class AndroidClient:
         self.task: ClientTask
         self.rs: bs4.ResultSet
         self.occupied = False
+        self.xml_interceptors = {}
+        self.parser: BeautifulSoup
 
     def restart_app(self, package_name: str, clear_data=False):
         """
@@ -214,10 +217,13 @@ class AndroidClient:
 
     def refresh_xml(self):
         self.xml = self.dump_xml()
+        self.parser = BeautifulSoup(self.xml, 'xml')
+        for when, do in self.xml_interceptors:
+            if when(self.parser):
+                do(self)
 
     def find_xml_by_attr(self, attrs) -> bs4.ResultSet:
-        parser = BeautifulSoup(self.xml, 'xml')
-        self.rs = parser.find_all(attrs=attrs)
+        self.rs = self.parser.find_all(attrs=attrs)
         return self.rs
 
     def wait_until_finish(self, bool_func, refresh_xml: bool = True, timeout=5):
@@ -312,6 +318,9 @@ class AndroidClient:
 
     def alive(self):
         return self.device.alive() and self.device.agent_alive()
+
+    def intercept_xml(self, when: Callable[[BeautifulSoup], bool], do: Callable):
+        self.xml_interceptors[when] = do
 
 
 class PublishClient(AndroidClient):
