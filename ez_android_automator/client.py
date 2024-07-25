@@ -320,9 +320,19 @@ class AndroidClient:
         return self.device.alive() and self.device.agent_alive()
 
     def intercept_xml(self, when: Callable[[BeautifulSoup], bool], do: Callable):
+        """
+        XML interceptors will listen on xml changes and call `do()` when `when()` return True.
+        This method is used on handling unexpected jump-outs globally.
+        Args:
+            when: condition function.
+            do: called when condition is fulfilled.
+        """
         self.xml_interceptors[when] = do
 
     def clear_xml_interceptors(self):
+        """
+        Clear all xml interceptors.
+        """
         self.xml_interceptors = {}
 
 
@@ -375,6 +385,7 @@ class ClientTask:
         self.handler: Callable
         self.priority = priority
         self.sub_task = False
+        self.clear_interceptors = True
 
     def run(self, client: AndroidClient):
         if self.handler is None and not self.sub_task:
@@ -390,8 +401,11 @@ class ClientTask:
                     if not self.handler(client, self, e):
                         break
                 else:
+                    client.clear_xml_interceptors()
                     raise e
         self.finished = True
+        if self.clear_interceptors:
+            client.clear_xml_interceptors()
         if self.callback is not None:
             self.callback(client, self)
 
