@@ -37,6 +37,7 @@ class BeforeLoginStage(Stage):
         client.wait_to_click({"text": "请输入手机号码"})
         client.device.send_keys(self.phone)
         client.wait_to_click({"text": "获取验证码"})
+        client.wait_to_click({"text": "同意并继续"})
 
 
 class PhoneAuthCodeStage(Stage):
@@ -46,7 +47,7 @@ class PhoneAuthCodeStage(Stage):
 
     def run(self, client: AndroidClient):
         client.device.send_keys(self.code)
-        client.wait_to_click({"text": "同意并登录"})
+
 
     def code_callback(self, code: str):
         self.code = code
@@ -55,6 +56,7 @@ class PhoneAuthCodeStage(Stage):
 class PressPublishButtonStage(Stage):
     def run(self, client: PublishClient):
         client.wait_to_click({"content-desc": "发布内容,5之3,标签"}, gap=3)
+        client.wait_to_click({"text": "全部允许"})
 
 
 class ChooseFirstVideoStage(Stage):
