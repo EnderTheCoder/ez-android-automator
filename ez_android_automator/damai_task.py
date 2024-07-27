@@ -18,6 +18,7 @@ class InterceptStage(Stage):
         client.intercept_to_click({'resource-id': 'cn.damai:id/homepage_popup_window_close_btn'})
         client.intercept_to_click({'resource-id': 'cn.damai:id/homepage_advert_pb'},
                                   {'resource-id': 'cn.damai:id/channel_search_text'})
+        client.intercept_to_click({'resource-id': 'cn.damai:id/damai_theme_dialog_cancel_btn'})
 
 
 class SearchStage(Stage):
@@ -38,10 +39,9 @@ class SelectCityStage(Stage):
 
     def run(self, client: AndroidClient):
         client.wait_until_found({'resource-id': 'cn.damai:id/tour_recyclerView'})
-        bounded_cities = client.rs[0].find_all(attrs={'resource-id': 'cn.damai:id/tv_city'})
-        for bounded_city in bounded_cities:
-            if bounded_city['text'] == self.city:
-                pass
+        city = client.rs[0].find(attrs={'resource-id': 'cn.damai:id/tv_city', 'text': self.city})
+        if city is not None:
+            client.click_xml_node(city)
 
 
 class DaMaiBuyTask(ClientTask):
