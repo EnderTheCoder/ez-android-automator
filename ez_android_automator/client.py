@@ -11,7 +11,7 @@ This file contains ez_android_automator classes and helper functions relating Cl
 import os
 import threading
 import warnings
-from typing import Callable, Any, Union
+from typing import Callable, Any, Union, Optional
 
 import bs4
 import uiautomator2
@@ -215,18 +215,19 @@ class AndroidClient:
     def dump_xml(self):
         return self.device.dump_hierarchy()
 
-    def refresh_xml(self):
+    def refresh_xml(self, trigger_interceptors: bool = True):
         self.xml = self.dump_xml()
         self.parser = BeautifulSoup(self.xml, 'xml')
-        for when, do in self.xml_interceptors:
-            if when(self.parser):
-                do(self)
+        if trigger_interceptors:
+            for when, do in self.xml_interceptors.items():
+                if when(self):
+                    do(self)
 
     def find_xml_by_attr(self, attrs) -> bs4.ResultSet:
         self.rs = self.parser.find_all(attrs=attrs)
         return self.rs
 
-    def wait_until_finish(self, bool_func, refresh_xml: bool = True, timeout=5):
+    def wait_until_finish(self, bool_func, refresh_xml: bool = True, timeout=5, trigger_interceptors: bool = True):
         """
         Block current thread until this client reached its destination.
         Args:
@@ -234,11 +235,12 @@ class AndroidClient:
             this loop. It accepts only one param in type of AndroidClient.
             refresh_xml: Deside if this client's xml will be refreshed in every loop.
             timeout: Max time to wait on this blocking.
+            trigger_interceptors: Whether to trigger interceptors in refresh_xml() method.
         """
         start_time = time.time()
         while True:
             if refresh_xml:
-                self.refresh_xml()
+                self.refresh_xml(trigger_interceptors=trigger_interceptors)
             if bool_func(self):
                 return
             current_time = time.time()
@@ -259,25 +261,26 @@ class AndroidClient:
     def click_xml_node(self, node):
         self.click_center(parse_coordinates(node['bounds']))
 
-    def wait_to_click(self, attr: dict, timeout=5, gap=0):
+    def wait_to_click(self, attr: dict, timeout=5, gap=0, refresh_xml: bool = True):
         """
         Use given params to find the right node and click it. This method is used on the most common situations.
         An exception will be thrown if it finds nothing using the given attr param.
+        :param refresh_xml: whether to refresh xml nodes during this loop.
         :param gap: the gap time in secs between finding and clicking.
         :param timeout: Max time to wait in secs on this element.
         :param attr: the attribute used on finding xml nodes.
         :return: None
         """
-
-        self.wait_until_found(attr, timeout)
+        self.wait_until_found(attr, timeout, refresh_xml=refresh_xml)
         time.sleep(gap)
         self.click_xml_node(self.rs[0])
 
-    def wait_until_found(self, attr: dict, timeout=10):
+    def wait_until_found(self, attr: dict, timeout=10, refresh_xml: bool = True, trigger_interceptors: bool = True):
         def bool_lambda(client_: AndroidClient):
             return len(client_.find_xml_by_attr(attr)) > 0
 
-        self.wait_until_finish(bool_lambda, timeout=timeout)
+        self.wait_until_finish(bool_lambda, timeout=timeout, refresh_xml=refresh_xml,
+                               trigger_interceptors=trigger_interceptors)
 
     def run_current_task(self, failure_callback: Callable = None, clear_task: bool = True):
         self.task.run(self)
@@ -319,7 +322,7 @@ class AndroidClient:
     def alive(self):
         return self.device.alive() and self.device.agent_alive()
 
-    def intercept_xml(self, when: Callable[[BeautifulSoup], bool], do: Callable):
+    def intercept_xml(self, when: Callable, do: Callable):
         """
         XML interceptors will listen on xml changes and call `do()` when `when()` return True.
         This method is used on handling unexpected jump-outs globally.
@@ -328,6 +331,18 @@ class AndroidClient:
             do: called when condition is fulfilled.
         """
         self.xml_interceptors[when] = do
+
+    def intercept_to_click(self, target_attrs: dict, end_sign_attrs: Optional[dict] = None):
+        def when(_client: AndroidClient) -> bool:
+            lst = _client.find_xml_by_attr(target_attrs)
+            return len(lst) > 0
+
+        def do(_client: AndroidClient):
+            _client.wait_to_click(target_attrs, refresh_xml=False, timeout=1)
+            if end_sign_attrs is not None:
+                _client.wait_until_found(end_sign_attrs, trigger_interceptors=False)
+
+        self.intercept_xml(when, do)
 
     def clear_xml_interceptors(self):
         """
@@ -350,7 +365,7 @@ class Stage:
     Base abstract class for a single step in a task.
     """
 
-    def __init__(self, stage_serial: int):
+    def __init__(self, stage_serial: int = 0):
         self.stage_serial = stage_serial
 
     def run(self, client: AndroidClient):
@@ -394,6 +409,8 @@ class ClientTask:
         for i, stage in enumerate(self.stages):
             self.current_stage = i
             try:
+                if i != stage.stage_serial:
+                    raise InvalidStageSerialException(stage)
                 stage.run(client)
             except Exception as e:
                 self.exception = e
@@ -425,8 +442,6 @@ class ClientTask:
         return self.exception is not None
 
     def append(self, stage: Stage):
-        if len(self.stages) != stage.stage_serial:
-            raise InvalidStageSerialException(stage)
         self.stages.append(stage)
 
     def set_callback(self, callback: Callable[[AndroidClient, Any], None]):
@@ -602,12 +617,17 @@ class StopAppStage(Stage):
 
 
 class StartAppStage(Stage):
-    def __init__(self, stage_serial: int, pkg_name: str):
+    def __init__(self, stage_serial: int, pkg_name: str, use_am: bool = False, restart: bool = True):
         super().__init__(stage_serial)
         self.pkg_name = pkg_name
+        self.restart = restart
+        self.use_am = use_am
 
     def run(self, client: AndroidClient):
-        client.device.app_start(self.pkg_name)
+        if self.use_am:
+            client.start_app_am(self.pkg_name)
+        else:
+            client.device.app_start(self.pkg_name, stop=self.restart)
 
 
 class ClearAppStage(Stage):
@@ -617,3 +637,12 @@ class ClearAppStage(Stage):
 
     def run(self, client: AndroidClient):
         client.device.app_clear(self.pkg_name)
+
+
+class WaitStage(Stage):
+    def __init__(self, stage_serial: int, timeout: float):
+        super().__init__(stage_serial)
+        self.timeout = timeout
+
+    def run(self, client: AndroidClient):
+        time.sleep(self.timeout)
