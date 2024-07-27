@@ -19,6 +19,8 @@ class InterceptStage(Stage):
         client.intercept_to_click({'resource-id': 'cn.damai:id/homepage_advert_pb'},
                                   {'resource-id': 'cn.damai:id/channel_search_text'})
         client.intercept_to_click({'resource-id': 'cn.damai:id/damai_theme_dialog_cancel_btn'})
+        client.intercept_to_click({'resource-id': 'cn.damai:id/state_view_refresh_btn'})
+        client.intercept_to_click({'resource-id': 'cn.damai:id/damai_theme_dialog_confirm_btn'})
 
 
 class SearchStage(Stage):
@@ -42,6 +44,16 @@ class SelectCityStage(Stage):
         city = client.rs[0].find(attrs={'resource-id': 'cn.damai:id/tv_city', 'text': self.city})
         if city is not None:
             client.click_xml_node(city)
+
+
+class SelectTimeStage(Stage):
+    def __init__(self, period_idx: int, seat_idx: int):
+        super().__init__()
+        self.period_idx = period_idx
+        self.seat_idx = seat_idx
+
+    def run(self, client: AndroidClient):
+        pass
 
 
 class DaMaiBuyTask(ClientTask):
