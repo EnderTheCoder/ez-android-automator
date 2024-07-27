@@ -282,6 +282,16 @@ class AndroidClient:
         self.wait_until_finish(bool_lambda, timeout=timeout, refresh_xml=refresh_xml,
                                trigger_interceptors=trigger_interceptors)
 
+    def wait_until_disappear(self, attr: dict, timeout=10, refresh_xml: bool = True, trigger_interceptors: bool = True):
+        self.wait_until_found(attr, timeout=timeout, refresh_xml=refresh_xml,
+                              trigger_interceptors=trigger_interceptors)
+
+        def bool_lambda(client_: AndroidClient):
+            return len(client_.find_xml_by_attr(attr)) == 0
+
+        self.wait_until_finish(bool_lambda, timeout=timeout, refresh_xml=refresh_xml,
+                               trigger_interceptors=trigger_interceptors)
+
     def run_current_task(self, failure_callback: Callable = None, clear_task: bool = True):
         self.task.run(self)
         if not self.task.is_finished and failure_callback is not None:

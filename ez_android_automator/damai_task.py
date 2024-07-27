@@ -9,7 +9,7 @@
 Auto ticket buying tasks for damai app.
 """
 
-from ez_android_automator.client import ClientTask, StartAppStage, Stage, AndroidClient
+from ez_android_automator.client import ClientTask, StartAppStage, Stage, AndroidClient, ClientWaitTimeout
 
 
 class InterceptStage(Stage):
@@ -54,6 +54,28 @@ class SelectTimeStage(Stage):
 
     def run(self, client: AndroidClient):
         pass
+
+
+class ResetAudienceStage(Stage):
+    def __init__(self, audiences: list[tuple[str, str]]):
+        super().__init__()
+        self.audiences = audiences
+
+    def run(self, client: AndroidClient):
+        try:
+            while True:
+                client.wait_to_click({'resource-id': 'cn.damai:id/custom_delete'}, timeout=1)
+                client.wait_to_click({'resource-id': 'cn.damai:id/damai_dialog_confirm_btn'})
+                client.wait_until_disappear({'resource-id': 'cn.damai:id/uikit_loading_icon'})
+        except ClientWaitTimeout:
+            pass
+
+        for audience in self.audiences:
+            client.wait_to_click({'resource-id': 'cn.damai:id/add_customer_btn'})
+            client.wait_to_click({'resource-id': 'cn.damai:id/add_contacts_name'})
+            client.device.send_keys(audience[0])
+            client.device.send_action("next")
+            client.device.send_keys(audience[1])
 
 
 class DaMaiBuyTask(ClientTask):
