@@ -223,11 +223,14 @@ class AndroidClient:
                 if when(self):
                     do(self)
 
-    def find_xml_by_attr(self, attrs) -> bs4.ResultSet:
-        self.rs = self.parser.find_all(attrs=attrs)
-        return self.rs
+    def find_xml_by_attr(self, attrs, record=True) -> bs4.ResultSet:
+        rs = self.parser.find_all(attrs=attrs)
+        if record:
+            self.rs = rs
+        return rs
 
-    def wait_until_finish(self, bool_func, refresh_xml: bool = True, timeout=5, trigger_interceptors: bool = True):
+    def wait_until_finish(self, bool_func, refresh_xml: bool = True, timeout: float = 5.0,
+                          trigger_interceptors: bool = True):
         """
         Block current thread until this client reached its destination.
         Args:
@@ -261,7 +264,9 @@ class AndroidClient:
     def click_xml_node(self, node):
         self.click_center(parse_coordinates(node['bounds']))
 
-    def wait_to_click(self, attr: dict, timeout=5, gap=0, refresh_xml: bool = True):
+    def wait_to_click(self, attr: dict, timeout: float = 5.0, gap=0, refresh_xml: bool = True,
+                      trigger_interceptors=True,
+                      click_all=False):
         """
         Use given params to find the right node and click it. This method is used on the most common situations.
         An exception will be thrown if it finds nothing using the given attr param.
@@ -269,13 +274,28 @@ class AndroidClient:
         :param gap: the gap time in secs between finding and clicking.
         :param timeout: Max time to wait in secs on this element.
         :param attr: the attribute used on finding xml nodes.
+        :param trigger_interceptors: whether to trigger interceptors
+        :param click_all: whether to click all nodes found
         :return: None
         """
-        self.wait_until_found(attr, timeout, refresh_xml=refresh_xml)
+        self.wait_until_found(attr, timeout, refresh_xml=refresh_xml, trigger_interceptors=trigger_interceptors)
         time.sleep(gap)
-        self.click_xml_node(self.rs[0])
+        if click_all:
+            for r in self.rs:
+                self.click_xml_node(r)
+        else:
+            self.click_xml_node(self.rs[0])
 
-    def wait_until_found(self, attr: dict, timeout=10, refresh_xml: bool = True, trigger_interceptors: bool = True):
+    def wait_until_found(self, attr: dict, timeout: float = 10, refresh_xml: bool = True,
+                         trigger_interceptors: bool = True):
+        def check_target_attr(client_: AndroidClient):
+            return len(client_.find_xml_by_attr(attr)) > 0
+
+        self.wait_until_finish(check_target_attr, timeout=timeout, refresh_xml=refresh_xml,
+                               trigger_interceptors=trigger_interceptors)
+
+    def back_until_found(self, attr: dict, max_times=5, timeout: float = 5, refresh_xml: bool = True,
+                         trigger_interceptors: bool = True):
         def bool_lambda(client_: AndroidClient):
             return len(client_.find_xml_by_attr(attr)) > 0
 
@@ -344,13 +364,13 @@ class AndroidClient:
 
     def intercept_to_click(self, target_attrs: dict, end_sign_attrs: Optional[dict] = None):
         def when(_client: AndroidClient) -> bool:
-            lst = _client.find_xml_by_attr(target_attrs)
-            return len(lst) > 0
+            rs = _client.find_xml_by_attr(target_attrs, record=False)
+            return len(rs) > 0
 
         def do(_client: AndroidClient):
-            _client.wait_to_click(target_attrs, refresh_xml=False, timeout=1)
+            _client.wait_to_click(target_attrs, trigger_interceptors=False, refresh_xml=True, timeout=0.2)
             if end_sign_attrs is not None:
-                _client.wait_until_found(end_sign_attrs, trigger_interceptors=False)
+                _client.wait_until_found(end_sign_attrs, trigger_interceptors=False, refresh_xml=True)
 
         self.intercept_xml(when, do)
 
