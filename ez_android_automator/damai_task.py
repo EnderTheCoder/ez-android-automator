@@ -11,8 +11,6 @@ Auto ticket buying tasks for damai app.
 import time
 from typing import Optional
 
-from bs4 import BeautifulSoup
-
 from ez_android_automator.client import ClientTask, StartAppStage, Stage, AndroidClient, ClientWaitTimeout
 
 
@@ -48,7 +46,8 @@ class EnterFirstSearchResultStage(Stage):
     def run(self, client: AndroidClient):
         time.sleep(0.5)
         client.wait_to_click({'resource-id': 'cn.damai:id/ll_search_item'})
-        client.wait_until_found({'resource-id': 'cn.damai:id/trade_project_detail_purchase_status_bar_container_fl'})
+        client.wait_until_found({'resource-id': 'cn.damai:id/trade_project_detail_purchase_status_bar_container_fl'},
+                                trigger_interceptors=False)
 
 
 class SelectCityStage(Stage):

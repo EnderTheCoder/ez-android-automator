@@ -431,22 +431,30 @@ class ClientTask:
         self.priority = priority
         self.sub_task = False
         self.clear_interceptors = True
+        self.reset_stage_idx = None
 
     def run(self, client: AndroidClient):
         if self.handler is None and not self.sub_task:
             warnings.warn(f'Handler for task {type(self).__name__} has not been implemented yet.'
                           'This may cause a crash when using manager to dispatch tasks.')
-        for i, stage in enumerate(self.stages):
-            self.current_stage = i
+        idx = 0
+        while idx < len(self.stages):
+            if self.reset_stage_idx is not None:
+                idx = self.reset_stage_idx
+                self.reset_stage_idx = None
+
+            self.current_stage = idx
             try:
-                if i != stage.stage_serial:
-                    raise InvalidStageSerialException(stage)
-                stage.run(client)
+                # if idx != stage.stage_serial:
+                #     raise InvalidStageSerialException(stage)
+                self.stages[idx].run(client)
+                idx += 1
             except Exception as e:
                 self.exception = e
                 if self.handler is not None:
-                    if not self.handler(client, self, e):
-                        break
+                    if self.handler(client, self, e):
+                        continue
+
                 else:
                     client.clear_xml_interceptors()
                     raise e
@@ -455,6 +463,9 @@ class ClientTask:
             client.clear_xml_interceptors()
         if self.callback is not None:
             self.callback(client, self)
+
+    def reset_stage_to(self, stage_idx: int):
+        self.reset_stage_idx = stage_idx
 
     def __lt__(self, other):
         return self.priority < other.priority
