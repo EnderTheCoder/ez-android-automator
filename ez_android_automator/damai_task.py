@@ -66,10 +66,11 @@ class CheckFareStage(Stage):
     def run(self, client: AndroidClient):
         rs = ['']
         while len(rs) != 0:
+            client.refresh_xml()
             rs = client.find_xml_by_attr(
                 {'resource-id': 'cn.damai:id/id_new_project_normal_count_down_layout'})
-            client.refresh_xml()
-        client.wait_to_click({'resource-id': 'cn.damai:id/trade_project_detail_purchase_status_bar_container_fl'})
+        client.wait_to_click({'resource-id': 'cn.damai:id/trade_project_detail_purchase_status_bar_container_fl'},
+                             refresh_xml=False, trigger_interceptors=False)
 
 
 class OutOfStockError(RuntimeError):
