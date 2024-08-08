@@ -152,7 +152,7 @@ class FireStage(Stage):
     def __init__(self, need: int, ym_token: str):
         super().__init__()
         self.need = need
-        self.captcha_parser = YmClient(ym_token)
+        self.captcha_parser = YmClient(ym_token, "20226")
 
     def run(self, client: AndroidClient):
         client.refresh_xml(trigger_interceptors=False)

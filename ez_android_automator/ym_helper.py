@@ -8,14 +8,12 @@
 """
 import base64
 from io import BytesIO
-
-import PIL
 import requests
 
 
 class YmClient:
-    def __init__(self, token):
-        self.type = "20226"
+    def __init__(self, token: str, c_type: str):
+        self.c_type = c_type
         self.token = token
 
     def parse(self, image) -> int:
@@ -30,8 +28,9 @@ class YmClient:
         response = requests.post('http://api.jfbym.com/api/YmServer/customApi', json={
             "token": self.token,
             "image": base64.b64encode(byte_data).decode(),
-            "type": self.type
+            "type": self.c_type
         }, headers={'Content-Type': 'application/json'})
         if response.status_code != 200:
-            raise RuntimeError(f"YmServer response error, parse captcha failed. code {response.status_code}, msg {response.text}")
+            raise RuntimeError(
+                f"YmServer response error, parse captcha failed. code {response.status_code}, msg {response.text}")
         return int(response.json()['data'])
