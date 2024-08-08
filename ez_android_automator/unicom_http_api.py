@@ -93,7 +93,7 @@ class UnicomExecutorClient:
             print('Success on task {}'.format(server_task['task_id']))
         else:
             self.report(server_task['task_id'],
-                        f'Stopped at {client.task.current_stage}/{len(client.task.stages)}, reason: {str(client.task.exception)}',
+                        f'Stopped at {client.task.current_stage_idx}/{len(client.task.stages)}, reason: {str(client.task.exception)}',
                         client.task.is_finished())
             print('Fail on task {}'.format(server_task['task_id']))
         client.unlock()

@@ -212,6 +212,12 @@ class AndroidClient:
                 next_path = posix_path_join(src, file_name)
                 self.push(next_path, posix_path_join(dst, basename), su)
 
+    def shot_xml(self, node):
+        x0, y0, x1, y1 = parse_coordinates(node['bounds'])
+        img = self.device.screenshot()
+        img = img.crop((x0, y0, x1, y1))
+        return img
+
     def dump_xml(self):
         return self.device.dump_hierarchy()
 
@@ -421,7 +427,7 @@ class ClientTask:
     def __init__(self, priority: int = 3):
         self.callback = None
         self.stages = list[Stage]()
-        self.current_stage = -1
+        self.current_stage_idx = -1
         self.exception = None
         self.finished = False
         self.exception: Exception
@@ -443,7 +449,7 @@ class ClientTask:
                 idx = self.reset_stage_idx
                 self.reset_stage_idx = None
 
-            self.current_stage = idx
+            self.current_stage_idx = idx
             try:
                 # if idx != stage.stage_serial:
                 #     raise InvalidStageSerialException(stage)
@@ -464,6 +470,9 @@ class ClientTask:
         if self.callback is not None:
             self.callback(client, self)
 
+    def current_stage(self):
+        return self.stages[self.current_stage_idx]
+
     def reset_stage_to(self, stage_idx: int):
         self.reset_stage_idx = stage_idx
 
@@ -471,10 +480,10 @@ class ClientTask:
         return self.priority < other.priority
 
     def get_stage(self):
-        return self.current_stage
+        return self.current_stage_idx
 
     def is_going(self):
-        return -1 < self.current_stage < len(self.stages) and not self.is_exception()
+        return -1 < self.current_stage_idx < len(self.stages) and not self.is_exception()
 
     def is_finished(self):
         return self.finished
@@ -500,7 +509,7 @@ class ClientTask:
         self.handler = handler
 
     def shift_down_priority(self):
-        self.current_stage = -1
+        self.current_stage_idx = -1
         self.exception = None
         self.finished = False
         self.priority += 1
