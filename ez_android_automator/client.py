@@ -244,15 +244,14 @@ class AndroidClient:
             self.rs = rs
         return rs
 
-    def wait_until_finish(self, bool_func, refresh_xml: bool = True, timeout: float = 5.0,
-                          intercept: bool = True):
+    def wait_until_finish(self, bool_func, refresh_xml: bool = True, timeout: float = 5.0, intercept: bool = True):
         """
-        Block current thread until this client reached its destination.
+        Block current thread until this client reached its goal.
         Args:
             bool_func: Pass in a quick detection lambda function to check if the condition is fulfilled, which will end
-            this loop. It accepts only one param in type of AndroidClient.
-            refresh_xml: Deside if this client's xml will be refreshed in every loop.
-            timeout: Max time to wait on this blocking.
+            this loop.
+            refresh_xml: Whether this client's xml will be refreshed in every loop.
+            timeout: Max timeout in seconds.
             intercept: Whether to trigger interceptors in refresh_xml() method.
         """
         start_time = time.time()
@@ -264,7 +263,7 @@ class AndroidClient:
             current_time = time.time()
             if start_time + timeout < current_time:
                 raise ClientWaitTimeout()
-            time.sleep(0.1)
+            time.sleep(0.01)
 
     def click_center(self, coordinates: (int, int, int, int)):
         """
