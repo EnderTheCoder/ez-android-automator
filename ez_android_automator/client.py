@@ -230,10 +230,10 @@ class AndroidClient:
     def dump_xml(self):
         return self.device.dump_hierarchy()
 
-    def refresh_xml(self, trigger_interceptors: bool = True):
+    def refresh_xml(self, intercept: bool = True):
         self.xml = self.dump_xml()
         self.parser = BeautifulSoup(self.xml, 'xml')
-        if trigger_interceptors:
+        if intercept:
             for when, do in self.xml_interceptors.items():
                 if when(self):
                     do(self)
@@ -245,7 +245,7 @@ class AndroidClient:
         return rs
 
     def wait_until_finish(self, bool_func, refresh_xml: bool = True, timeout: float = 5.0,
-                          trigger_interceptors: bool = True):
+                          intercept: bool = True):
         """
         Block current thread until this client reached its destination.
         Args:
@@ -253,12 +253,12 @@ class AndroidClient:
             this loop. It accepts only one param in type of AndroidClient.
             refresh_xml: Deside if this client's xml will be refreshed in every loop.
             timeout: Max time to wait on this blocking.
-            trigger_interceptors: Whether to trigger interceptors in refresh_xml() method.
+            intercept: Whether to trigger interceptors in refresh_xml() method.
         """
         start_time = time.time()
         while True:
             if refresh_xml:
-                self.refresh_xml(trigger_interceptors=trigger_interceptors)
+                self.refresh_xml(intercept=intercept)
             if bool_func(self):
                 return
             current_time = time.time()
@@ -280,7 +280,7 @@ class AndroidClient:
         self.click_center(parse_coordinates(node['bounds']))
 
     def wait_to_click(self, attr: dict, timeout: float = 5.0, gap=0, refresh_xml: bool = True,
-                      trigger_interceptors=True,
+                      intercept=True,
                       click_all=False):
         """
         Use given params to find the right node and click it. This method is used on the most common situations.
@@ -289,11 +289,11 @@ class AndroidClient:
         :param gap: the gap time in secs between finding and clicking.
         :param timeout: Max time to wait in secs on this element.
         :param attr: the attribute used on finding xml nodes.
-        :param trigger_interceptors: whether to trigger interceptors
+        :param intercept: whether to trigger interceptors
         :param click_all: whether to click all nodes found
         :return: None
         """
-        self.wait_until_found(attr, timeout, refresh_xml=refresh_xml, trigger_interceptors=trigger_interceptors)
+        self.wait_until_found(attr, timeout, refresh_xml=refresh_xml, intercept=intercept)
         time.sleep(gap)
         if click_all:
             for r in self.rs:
@@ -302,38 +302,42 @@ class AndroidClient:
             self.click_xml_node(self.rs[0])
 
     def wait_until_found(self, attr: dict, timeout: float = 10, refresh_xml: bool = True,
-                         trigger_interceptors: bool = True):
+                         intercept: bool = True):
         def check_target_attr(client_: AndroidClient):
             return len(client_.find_xml_by_attr(attr)) > 0
 
         try:
             self.wait_until_finish(check_target_attr, timeout=timeout, refresh_xml=refresh_xml,
-                                   trigger_interceptors=trigger_interceptors)
+                                   intercept=intercept)
         except ClientWaitTimeout as e:
             e.attrs = attr
             raise e
 
-    def back_until_found(self, attr: dict, max_times=5, timeout: float = 5, refresh_xml: bool = True,
-                         trigger_interceptors: bool = True):
+    def back_until_found(self, attr: dict, timeout: float = 5, refresh_xml: bool = True, intercept: bool = True):
+        """
+        :todo: not done yet
+        :param attr:
+        :param timeout:
+        :param refresh_xml:
+        :param intercept:
+        :return:
+        """
         def bool_lambda(client_: AndroidClient):
             return len(client_.find_xml_by_attr(attr)) > 0
 
         try:
-            self.wait_until_finish(bool_lambda, timeout=timeout, refresh_xml=refresh_xml,
-                                   trigger_interceptors=trigger_interceptors)
+            self.wait_until_finish(bool_lambda, timeout=timeout, refresh_xml=refresh_xml, intercept=intercept)
         except ClientWaitTimeout as e:
             e.attrs = attr
             raise e
 
-    def wait_until_disappear(self, attr: dict, timeout=10, refresh_xml: bool = True, trigger_interceptors: bool = True):
-        self.wait_until_found(attr, timeout=timeout, refresh_xml=refresh_xml,
-                              trigger_interceptors=trigger_interceptors)
+    def wait_until_disappear(self, attr: dict, timeout=10, refresh_xml: bool = True, intercept: bool = True):
+        self.wait_until_found(attr, timeout=timeout, refresh_xml=refresh_xml, intercept=intercept)
 
         def bool_lambda(client_: AndroidClient):
             return len(client_.find_xml_by_attr(attr)) == 0
 
-        self.wait_until_finish(bool_lambda, timeout=timeout, refresh_xml=refresh_xml,
-                               trigger_interceptors=trigger_interceptors)
+        self.wait_until_finish(bool_lambda, timeout=timeout, refresh_xml=refresh_xml, intercept=intercept)
 
     def run_current_task(self, failure_callback: Callable = None, clear_task: bool = True):
         self.task.run(self)
@@ -392,9 +396,9 @@ class AndroidClient:
 
         def do(_client: AndroidClient):
             try:
-                _client.wait_to_click(target_attrs, trigger_interceptors=False, refresh_xml=True, timeout=0.2)
+                _client.wait_to_click(target_attrs, intercept=False, refresh_xml=True, timeout=0.2)
                 if end_sign_attrs is not None:
-                    _client.wait_until_found(end_sign_attrs, trigger_interceptors=False, refresh_xml=True)
+                    _client.wait_until_found(end_sign_attrs, intercept=False, refresh_xml=True)
             except ClientWaitTimeout:
                 pass
 

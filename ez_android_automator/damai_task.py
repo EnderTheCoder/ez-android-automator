@@ -117,7 +117,7 @@ class CheckFareStage(Stage):
                     {'resource-id': 'cn.damai:id/trade_project_detail_purchase_status_bar_container_fl'})[0]
         while True:
             client.click_xml_node(self.purchase_node)
-            client.refresh_xml(trigger_interceptors=False)
+            client.refresh_xml(intercept=False)
             if len(client.find_xml_by_attr({'text': '场次'})) > 0:
                 break
 
@@ -138,7 +138,7 @@ class SelectDateStage(Stage):
 
     def run(self, client: AndroidClient):
         client.wait_until_found({'resource-id': 'cn.damai:id/layout_perform_view'},
-                                trigger_interceptors=False)
+                                intercept=False)
         rs_project = client.rs[0]
         rs_0 = rs_project.find_all(attrs={'resource-id': 'cn.damai:id/ll_perform_item'})
         chosen_date_idx = -1
@@ -150,7 +150,7 @@ class SelectDateStage(Stage):
                 raise OutOfStockError(self.amount, 0)
         client.click_xml_node(rs_0[chosen_date_idx])
         while True:
-            client.refresh_xml(trigger_interceptors=False)
+            client.refresh_xml(intercept=False)
             rs_price = client.find_xml_by_attr({'resource-id': 'cn.damai:id/layout_price'})
             if len(rs_price) == 0:
                 client.click_xml_node(rs_0[chosen_date_idx])
@@ -165,11 +165,11 @@ class SelectDateStage(Stage):
             if idx == self.level_idx[-1]:
                 raise OutOfStockError(self.amount, 0)
         client.click_xml_node(rs_1[chosen_level_idx])
-        client.wait_until_found({'resource-id': 'cn.damai:id/img_jia'}, trigger_interceptors=False)
+        client.wait_until_found({'resource-id': 'cn.damai:id/img_jia'}, intercept=False)
         for i in range(self.amount - 1):
             client.click_xml_node(client.rs[0])
         time.sleep(0.5)
-        client.refresh_xml(trigger_interceptors=False)
+        client.refresh_xml(intercept=False)
         client.find_xml_by_attr({'resource-id': 'cn.damai:id/tv_num'})
         found = int(str(client.rs[0]['text']).removesuffix("张"))
         if found != self.amount:
@@ -184,16 +184,16 @@ class FireStage(Stage):
         self.captcha_parser = SliderSolver(ym_token)
 
     def run(self, client: AndroidClient):
-        client.refresh_xml(trigger_interceptors=False)
+        client.refresh_xml(intercept=False)
         if len(client.find_xml_by_attr({'text': '我知道了'})) > 0:
             raise OutOfStockError(self.need, 0)
 
         client.wait_until_found({'resource-id': 'cn.damai:id/checkbox'},
-                                trigger_interceptors=False, timeout=20)
+                                intercept=False, timeout=20)
         print('current app:', client.device.app_current())
         while client.device.app_current()['package'] == 'cn.damai':
             print('current app:', client.device.app_current())
-            client.refresh_xml(trigger_interceptors=False)
+            client.refresh_xml(intercept=False)
             if len(client.find_xml_by_attr({'text': '提交订单'})) > 0:
                 client.click_xml_node(client.rs[0])
             if len(client.find_xml_by_attr({'text': '亲，请按照说明进行验证哦'})) > 0:
