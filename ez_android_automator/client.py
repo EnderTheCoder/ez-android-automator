@@ -52,9 +52,18 @@ def parse_coordinates(bounds: str):
     return x1, x2, y1, y2
 
 
+def parse_node_xyxy(node):
+    x0, x1, y0, y1 = parse_coordinates(node['bounds'])
+    return x0, y0, x1, y1
+
+
 class ClientWaitTimeout(TimeoutError):
-    def __init__(self):
-        super().__init__("Client wait too long to do detection on this task.")
+    def __init__(self, attrs=Optional[dict]):
+        self.attrs = attrs
+        if self.attrs is None:
+            super().__init__("Client wait too long to do detection on this task.")
+        else:
+            super().__init__(f"Node with attrs: {str(self.attrs)} not found during client waiting.")
 
 
 class PhoneLoginException(Exception):
@@ -213,7 +222,7 @@ class AndroidClient:
                 self.push(next_path, posix_path_join(dst, basename), su)
 
     def shot_xml(self, node):
-        x0, y0, x1, y1 = parse_coordinates(node['bounds'])
+        x0, y0, x1, y1 = parse_node_xyxy(node)
         img = self.device.screenshot()
         img = img.crop((x0, y0, x1, y1))
         return img
@@ -297,16 +306,24 @@ class AndroidClient:
         def check_target_attr(client_: AndroidClient):
             return len(client_.find_xml_by_attr(attr)) > 0
 
-        self.wait_until_finish(check_target_attr, timeout=timeout, refresh_xml=refresh_xml,
-                               trigger_interceptors=trigger_interceptors)
+        try:
+            self.wait_until_finish(check_target_attr, timeout=timeout, refresh_xml=refresh_xml,
+                                   trigger_interceptors=trigger_interceptors)
+        except ClientWaitTimeout as e:
+            e.attrs = attr
+            raise e
 
     def back_until_found(self, attr: dict, max_times=5, timeout: float = 5, refresh_xml: bool = True,
                          trigger_interceptors: bool = True):
         def bool_lambda(client_: AndroidClient):
             return len(client_.find_xml_by_attr(attr)) > 0
 
-        self.wait_until_finish(bool_lambda, timeout=timeout, refresh_xml=refresh_xml,
-                               trigger_interceptors=trigger_interceptors)
+        try:
+            self.wait_until_finish(bool_lambda, timeout=timeout, refresh_xml=refresh_xml,
+                                   trigger_interceptors=trigger_interceptors)
+        except ClientWaitTimeout as e:
+            e.attrs = attr
+            raise e
 
     def wait_until_disappear(self, attr: dict, timeout=10, refresh_xml: bool = True, trigger_interceptors: bool = True):
         self.wait_until_found(attr, timeout=timeout, refresh_xml=refresh_xml,
@@ -374,9 +391,12 @@ class AndroidClient:
             return len(rs) > 0
 
         def do(_client: AndroidClient):
-            _client.wait_to_click(target_attrs, trigger_interceptors=False, refresh_xml=True, timeout=0.2)
-            if end_sign_attrs is not None:
-                _client.wait_until_found(end_sign_attrs, trigger_interceptors=False, refresh_xml=True)
+            try:
+                _client.wait_to_click(target_attrs, trigger_interceptors=False, refresh_xml=True, timeout=0.2)
+                if end_sign_attrs is not None:
+                    _client.wait_until_found(end_sign_attrs, trigger_interceptors=False, refresh_xml=True)
+            except ClientWaitTimeout:
+                pass
 
         self.intercept_xml(when, do)
 

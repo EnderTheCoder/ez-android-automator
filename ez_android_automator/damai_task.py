@@ -13,8 +13,8 @@ import time
 from typing import Optional
 
 from ez_android_automator.client import ClientTask, StartAppStage, Stage, AndroidClient, ClientWaitTimeout, \
-    parse_coordinates
-from ez_android_automator.ym_helper import YmClient
+    parse_node_xyxy
+from ez_android_automator.ym_helper import YmClient, SliderSolver, CaptchaSolveError
 
 
 class InterceptStage(Stage):
@@ -50,7 +50,7 @@ class EnterFirstSearchResultStage(Stage):
         time.sleep(0.5)
         client.wait_to_click({'resource-id': 'cn.damai:id/ll_search_item'})
         client.wait_until_found({'resource-id': 'cn.damai:id/trade_project_detail_purchase_status_bar_container_fl'},
-                                trigger_interceptors=False)
+                                timeout=10)
 
 
 class SelectCityStage(Stage):
@@ -59,10 +59,12 @@ class SelectCityStage(Stage):
         self.city = city
 
     def run(self, client: AndroidClient):
-        client.wait_until_found({'resource-id': 'cn.damai:id/tour_recyclerView'})
-        city = client.rs[0].find(attrs={'resource-id': 'cn.damai:id/tv_city', 'text': self.city})
-        if city is not None:
-            client.click_xml_node(city)
+        try:
+            client.wait_until_found({'resource-id': 'cn.damai:id/tour_recyclerView'})
+            client.wait_to_click({'resource-id': 'cn.damai:id/tv_city', 'text': self.city})
+        except ClientWaitTimeout:
+            print("City identified not found, fallback to first search result.")
+            client.wait_to_click({'resource-id': 'cn.damai:id/ll_search_item'})
 
 
 class CheckFareStage(Stage):
@@ -70,13 +72,40 @@ class CheckFareStage(Stage):
         super().__init__()
         self.count_down_checked = False
         self.purchase_node = None
+        self.audience_pre_set = False
 
     def run(self, client: AndroidClient):
+        client.refresh_xml()
+        while len(client.find_xml_by_attr({'text': '购票须知'})) > 0:
+            client.click_xml_node(client.rs[0])
+            client.refresh_xml()
+        client.wait_until_found({'resource-id': 'cn.damai:id/trade_project_detail_purchase_status_bar_container_fl'},
+                                timeout=30)
+        if not self.audience_pre_set:
+            try:
+                client.wait_to_click({'resource-id': 'cn.damai:id/goto_setinfo_btn_text'})
+                client.wait_until_found({'text': '预选本次实名观演人'})
+                time.sleep(0.5)
+                client.wait_to_click({'text': '去预选'})
+                client.wait_to_click({'checked': 'false', 'checkable': 'true'}, click_all=True, timeout=10)
+                client.wait_to_click({'text': '确定'})
+                client.device.keyevent('back')
+                client.wait_until_found(
+                    {'resource-id': 'cn.damai:id/trade_project_detail_purchase_status_bar_container_fl'},
+                    timeout=20)
+                self.audience_pre_set = True
+            except ClientWaitTimeout:
+                self.audience_pre_set = True
+                if len(client.find_xml_by_attr({'text': '已预选'})) > 0:
+                    client.device.keyevent('back')
+                    client.wait_until_found(
+                        {'resource-id': 'cn.damai:id/trade_project_detail_purchase_status_bar_container_fl'}
+                    )
         if not self.count_down_checked:
             rs = ['']
             rs_1 = ['']
             while len(rs) != 0 or len(rs_1) != 0:
-                client.refresh_xml(trigger_interceptors=False)
+                client.refresh_xml()
                 rs = client.find_xml_by_attr(
                     {'resource-id': 'cn.damai:id/id_new_project_normal_count_down_layout'})
                 rs_1 = client.find_xml_by_attr({'resource-id': 'cn.damai:id/project_timer_layout'})
@@ -108,10 +137,10 @@ class SelectDateStage(Stage):
         self.amount = amount
 
     def run(self, client: AndroidClient):
-        client.wait_until_found({'resource-id': 'cn.damai:id/project_detail_perform_flowlayout'},
+        client.wait_until_found({'resource-id': 'cn.damai:id/layout_perform_view'},
                                 trigger_interceptors=False)
-        rs_project = client.find_xml_by_attr({'resource-id': 'cn.damai:id/project_detail_perform_flowlayout'})
-        rs_0 = rs_project[0].find_all(attrs={'resource-id': 'cn.damai:id/ll_perform_item'})
+        rs_project = client.rs[0]
+        rs_0 = rs_project.find_all(attrs={'resource-id': 'cn.damai:id/ll_perform_item'})
         chosen_date_idx = -1
         for idx in self.date_idx:
             if rs_0[idx].find(attrs={'text': '无票'}) is None:
@@ -152,36 +181,46 @@ class FireStage(Stage):
     def __init__(self, need: int, ym_token: str):
         super().__init__()
         self.need = need
-        self.captcha_parser = YmClient(ym_token, "20226")
+        self.captcha_parser = SliderSolver(ym_token)
 
     def run(self, client: AndroidClient):
         client.refresh_xml(trigger_interceptors=False)
         if len(client.find_xml_by_attr({'text': '我知道了'})) > 0:
             raise OutOfStockError(self.need, 0)
-        client.wait_to_click({'resource-id': 'cn.damai:id/checkbox'}, click_all=True, refresh_xml=False,
-                             trigger_interceptors=False)
-        while client.device.app_current() == 'cn.damai':
-            client.wait_to_click({'text': '提交订单'}, refresh_xml=False, trigger_interceptors=False)
+
+        client.wait_until_found({'resource-id': 'cn.damai:id/checkbox'},
+                                trigger_interceptors=False, timeout=20)
+        print('current app:', client.device.app_current())
+        while client.device.app_current()['package'] == 'cn.damai':
+            print('current app:', client.device.app_current())
             client.refresh_xml(trigger_interceptors=False)
+            if len(client.find_xml_by_attr({'text': '提交订单'})) > 0:
+                client.click_xml_node(client.rs[0])
             if len(client.find_xml_by_attr({'text': '亲，请按照说明进行验证哦'})) > 0:
                 print('captcha triggered')
                 slider_node = client.find_xml_by_attr({'resource-id': 'scratch-captcha-btn'})[0]
                 rail_node = slider_node.parent
                 captcha_node = client.find_xml_by_attr({'resource-id': 'scratch-captcha-question-container'})[0].parent
 
-                slider_xyxy = parse_coordinates(slider_node['bounds'])
-                rail_xyxy = parse_coordinates(rail_node['bounds'])
-                captcha_xyxy = parse_coordinates(captcha_node['bounds'])
+                slider_xyxy = parse_node_xyxy(slider_node)
+                rail_xyxy = parse_node_xyxy(rail_node)
+                captcha_xyxy = parse_node_xyxy(captcha_node)
 
                 client.device.touch.down((slider_xyxy[0] + slider_xyxy[2]) / 2, (slider_xyxy[1] + slider_xyxy[3]) / 2)
                 client.device.touch.move(rail_xyxy[2], (rail_xyxy[1] + rail_xyxy[3]) / 2)
                 captcha_img = client.shot_xml(captcha_node)
-
-                right_x = self.captcha_parser.parse(captcha_img)
+                captcha_img.save('captcha.jpg')
+                try:
+                    right_x = self.captcha_parser.solve(captcha_img)
+                except CaptchaSolveError as e:
+                    print(f"验证码解析错误：{e.data['msg']}")
+                    client.device.touch.up(0, 0)
+                    client.device.xpath.click('//android.view.View[@text=""]')
+                    continue
                 w, h = client.device.window_size()
                 side_offset = (w - (captcha_xyxy[2] - captcha_xyxy[0])) / 2
 
-                end_at = right_x + side_offset, (rail_xyxy[1] + rail_xyxy[3]) / 2 + random.randrange(0, 50)
+                end_at = right_x + side_offset, (rail_xyxy[1] + rail_xyxy[3]) / 2 + random.randrange(-50, 50)
 
                 client.device.touch.move(end_at[0], end_at[1])
                 client.device.touch.up(end_at[0], end_at[1])
@@ -190,6 +229,10 @@ class FireStage(Stage):
 
             if len(client.find_xml_by_attr(attrs={'text': '继续尝试'})) > 0:
                 client.click_xml_node(client.rs[0])
+
+            if len(client.find_xml_by_attr(attrs={'text': '我知道了'})) > 0:
+                client.click_xml_node(client.rs[0])
+                raise OutOfStockError(self.need, 0)
 
 
 class ResetAudienceStage(Stage):
@@ -200,7 +243,7 @@ class ResetAudienceStage(Stage):
     def run(self, client: AndroidClient):
         if self.audiences is None or self.audiences == []:
             return
-        client.wait_to_click({'text': '我的'})
+        client.wait_to_click({'text': '我的'}, timeout=10)
         client.wait_to_click({'text': '观演人'})
         client.wait_until_found({'text': '常用观演人'})
         time.sleep(1)
@@ -235,10 +278,11 @@ class DaMaiBuyTask(ClientTask):
         self.append(StartAppStage(0, 'cn.damai'))
         self.append(ResetAudienceStage(audiences))
         self.append(SearchStage(search_text))
-        self.append(EnterFirstSearchResultStage())
-        self.append(CheckFareStage())
         if city is not None:
             self.append(SelectCityStage(city))
+        else:
+            self.append(EnterFirstSearchResultStage())
+        self.append(CheckFareStage())
         self.append(SelectDateStage(date_idx, level_idx, len(audiences)))
         self.append(FireStage(len(audiences), ym_token))
         self.auto_serial()
