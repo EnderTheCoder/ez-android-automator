@@ -246,7 +246,7 @@ class AndroidClient:
 
     def wait_until_finish(self, bool_func, refresh_xml: bool = True, timeout: float = 5.0, intercept: bool = True):
         """
-        Block current thread until this client reached its goal.
+        Block current thread until this client reaches its goal.
         Args:
             bool_func: Pass in a quick detection lambda function to check if the condition is fulfilled, which will end
             this loop.
