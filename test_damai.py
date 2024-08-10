@@ -13,8 +13,8 @@ from ez_android_automator.damai_task import DaMaiBuyTask
 
 task = DaMaiBuyTask(
     [('祁佩璇', '152701199203060928')],
-    "李宇春",
-    '成都',
+    "厦门十个勤天",
+    None,
     [0],
     [0, 1, 2, 3, 4],
     os.environ.get("YM_TOKEN")

@@ -51,4 +51,4 @@ class SliderSolver(YmClient):
         super().__init__(token, "20226")
 
     def solve(self, image) -> int:
-        return int(self.parse(image)['data'])
+        return int(self.parse(image)['data']['data'])

@@ -102,14 +102,15 @@ class CheckFareStage(Stage):
                         {'resource-id': 'cn.damai:id/trade_project_detail_purchase_status_bar_container_fl'}
                     )
         if not self.count_down_checked:
-            rs = ['']
+            rs_0 = ['']
             rs_1 = ['']
-            while len(rs) != 0 or len(rs_1) != 0:
+            rs_2 = ['']
+            while len(rs_0) != 0 or len(rs_1) != 0 or len(rs_2) != 0:
                 client.refresh_xml()
-                rs = client.find_xml_by_attr(
+                rs_0 = client.find_xml_by_attr(
                     {'resource-id': 'cn.damai:id/id_new_project_normal_count_down_layout'})
                 rs_1 = client.find_xml_by_attr({'resource-id': 'cn.damai:id/project_timer_layout'})
-
+                rs_2 = client.find_xml_by_attr({'resource-id': 'cn.damai:id/member_normal_start_sale_layout'})
             self.count_down_checked = True
         if self.purchase_node is None:
             self.purchase_node = \
