@@ -106,7 +106,7 @@ class SignStage(Stage):
         try:
             client.simple_click(1)
             client.wait_until_found({'text': '请使用联通手机号登录APP，参与本次活动'})
-            client.device.keyevent('back')
+            client.key_back()
         except ClientWaitTimeout:
             pass
         client.simple_click(1)

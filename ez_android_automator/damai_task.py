@@ -41,7 +41,8 @@ class SearchStage(Stage):
     def run(self, client: AndroidClient):
         client.wait_to_click({'resource-id': 'cn.damai:id/channel_search_text'})
         client.device.send_keys(self.search_text)
-        client.device.send_action("search")
+        client.wait_until_found({'text': self.search_text})
+        client.key_enter()
         client.wait_to_click({'text': '演出'})
 
 
@@ -89,7 +90,7 @@ class CheckFareStage(Stage):
                 client.wait_to_click({'text': '去预选'})
                 client.wait_to_click({'checked': 'false', 'checkable': 'true'}, click_all=True, timeout=10)
                 client.wait_to_click({'text': '确定'})
-                client.device.keyevent('back')
+                client.key_back()
                 client.wait_until_found(
                     {'resource-id': 'cn.damai:id/trade_project_detail_purchase_status_bar_container_fl'},
                     timeout=20)
@@ -97,7 +98,7 @@ class CheckFareStage(Stage):
             except ClientWaitTimeout:
                 self.audience_pre_set = True
                 if len(client.find_xml_by_attr({'text': '已预选'})) > 0:
-                    client.device.keyevent('back')
+                    client.key_back()
                     client.wait_until_found(
                         {'resource-id': 'cn.damai:id/trade_project_detail_purchase_status_bar_container_fl'}
                     )
@@ -261,13 +262,14 @@ class ResetAudienceStage(Stage):
             time.sleep(1)
             client.wait_to_click({'resource-id': 'cn.damai:id/add_contacts_name'})
             client.device.send_keys(audience[0])
-            client.device.send_action("next")
+            client.wait_to_click({'resource-id': 'cn.damai:id/add_contacts_idcard_number'})
             client.device.send_keys(audience[1])
+            client.key_back()
             client.device.xpath.click('//android.widget.CheckBox')
             client.wait_to_click({'resource-id': 'cn.damai:id/add_contacts_save_btn'})
             client.wait_until_found({'text': '常用观演人'})
-        client.device.keyevent('back')
-        client.device.keyevent('back')
+        client.key_back()
+        client.key_back()
 
 
 class DaMaiBuyTask(ClientTask):
@@ -297,7 +299,7 @@ def damai_handler(_client: AndroidClient, _task: DaMaiBuyTask, _exception):
             _task.reset_stage_to(_task.current_stage_idx - 1)
             return True
         if isinstance(_task.current_stage(), SelectDateStage):
-            _client.device.keyevent('back')
+            _client.key_back()
             _task.reset_stage_to(5)
             return True
     raise _exception

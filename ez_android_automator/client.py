@@ -24,8 +24,8 @@ def create_network_client(addr):
     return AndroidClient(uiautomator2.connect(addr))
 
 
-def create_usb_client(serial: str = None, init: bool = False):
-    return AndroidClient(uiautomator2.connect_usb(serial, init))
+def create_usb_client(serial: str = None):
+    return AndroidClient(uiautomator2.connect_usb(serial))
 
 
 def parse_coordinates(bounds: str):
@@ -321,6 +321,7 @@ class AndroidClient:
         :param intercept:
         :return:
         """
+
         def bool_lambda(client_: AndroidClient):
             return len(client_.find_xml_by_attr(attr)) > 0
 
@@ -409,6 +410,14 @@ class AndroidClient:
         """
         self.xml_interceptors = {}
 
+    def key_back(self):
+        self.device.keyevent('KEYCODE_BACK')
+
+    def key_tab(self):
+        self.device.keyevent('KEYCODE_TAB')
+
+    def key_enter(self):
+        self.device.keyevent('KEYCODE_ENTER')
 
 class PublishClient(AndroidClient):
     """

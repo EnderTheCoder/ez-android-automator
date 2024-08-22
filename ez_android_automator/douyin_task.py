@@ -51,7 +51,7 @@ class SetVideoOptionsStage(Stage):
     def run(self, client: PublishClient):
         client.wait_to_click({'text': '添加作品描述..'})
         client.device.send_keys(self.content)
-        client.device.keyevent('back')
+        client.key_back()
         client.find_xml_by_attr({'text': '发布'})
         client.click_xml_node(client.rs[0])
 

@@ -49,7 +49,7 @@ class SetVideoOptionsStage(Stage):
         client.device.send_keys(self.title)
         client.wait_to_click({'text': '添加正文'})
         client.device.send_keys(self.content)
-        client.device.keyevent('back')
+        client.key_back()
         client.wait_to_click({'text': '发布笔记'})
 
 
