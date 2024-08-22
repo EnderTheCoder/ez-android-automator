@@ -87,6 +87,8 @@ class AndroidClient:
         self.occupied = False
         self.xml_interceptors = {}
         self.parser: BeautifulSoup
+        self.debug_msg = False
+        self.perf_msg = False
 
     def restart_app(self, package_name: str, clear_data=False):
         """
@@ -231,12 +233,20 @@ class AndroidClient:
         return self.device.dump_hierarchy()
 
     def refresh_xml(self, intercept: bool = True):
+        t1 = time.time()
         self.xml = self.dump_xml()
+        t2 = time.time()
         self.parser = BeautifulSoup(self.xml, 'xml')
+        t3 = time.time()
         if intercept:
             for when, do in self.xml_interceptors.items():
                 if when(self):
                     do(self)
+        t4 = time.time()
+        if self.perf_msg:
+            print(f'refresh elapsed time: {t2 - t1}')
+            print(f'parse elapsed time: {t3 - t2}')
+            print(f'intercept elapsed time: {t4 - t3}')
 
     def find_xml_by_attr(self, attrs, record=True) -> bs4.ResultSet:
         rs = self.parser.find_all(attrs=attrs)
@@ -418,6 +428,7 @@ class AndroidClient:
 
     def key_enter(self):
         self.device.keyevent('KEYCODE_ENTER')
+
 
 class PublishClient(AndroidClient):
     """

@@ -21,6 +21,7 @@ task = DaMaiBuyTask(
 )
 
 client = create_usb_client()
+client.perf_msg = True
 client.set_task(
     task
 )

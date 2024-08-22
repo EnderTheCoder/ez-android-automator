@@ -40,8 +40,9 @@ class SearchStage(Stage):
 
     def run(self, client: AndroidClient):
         client.wait_to_click({'resource-id': 'cn.damai:id/channel_search_text'})
+        time.sleep(0.5)
         client.device.send_keys(self.search_text)
-        client.wait_until_found({'text': self.search_text})
+        client.wait_until_found({'text': self.search_text, 'resource-id': 'cn.damai:id/header_search_v2_input'})
         client.key_enter()
         client.wait_to_click({'text': '演出'})
 
@@ -76,12 +77,14 @@ class CheckFareStage(Stage):
         self.audience_pre_set = False
 
     def run(self, client: AndroidClient):
-        client.refresh_xml()
+        t1 = time.time()
+        client.refresh_xml(intercept=False)
         while len(client.find_xml_by_attr({'text': '购票须知'})) > 0:
             client.click_xml_node(client.rs[0])
             client.refresh_xml()
-        client.wait_until_found({'resource-id': 'cn.damai:id/trade_project_detail_purchase_status_bar_container_fl'},
-                                timeout=30)
+        client.wait_until_found({'resource-id': 'cn.damai:id/trade_project_detail_purchase_status_bar_container_fl'})
+        t2 = time.time()
+        print(t2 - t1)
         if not self.audience_pre_set:
             try:
                 client.wait_to_click({'resource-id': 'cn.damai:id/goto_setinfo_btn_text'})
@@ -139,8 +142,11 @@ class SelectDateStage(Stage):
         self.amount = amount
 
     def run(self, client: AndroidClient):
+        t1 = time.time()
         client.wait_until_found({'resource-id': 'cn.damai:id/layout_perform_view'},
                                 intercept=False)
+        t2 = time.time()
+        print('costs', t2 - t1)
         rs_project = client.rs[0]
         rs_0 = rs_project.find_all(attrs={'resource-id': 'cn.damai:id/ll_perform_item'})
         chosen_date_idx = -1
@@ -253,7 +259,7 @@ class ResetAudienceStage(Stage):
             while True:
                 client.wait_to_click({'resource-id': 'cn.damai:id/custom_delete'}, timeout=1, gap=2)
                 client.wait_to_click({'resource-id': 'cn.damai:id/damai_dialog_confirm_btn'})
-                time.sleep(2)
+                time.sleep(0.5)
         except ClientWaitTimeout:
             pass
         for audience in self.audiences:
