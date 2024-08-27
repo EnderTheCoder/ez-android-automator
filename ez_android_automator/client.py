@@ -58,12 +58,12 @@ def parse_node_xyxy(node):
 
 
 class ClientWaitTimeout(TimeoutError):
-    def __init__(self, attrs=Optional[dict]):
+    def __init__(self, attrs: Optional[dict] = None):
         self.attrs = attrs
         if self.attrs is None:
             super().__init__("Client wait too long to do detection on this task.")
         else:
-            super().__init__(f"Node with attrs: {str(self.attrs)} not found during client waiting.")
+            super().__init__(f"Node with attrs: {str(dict(self.attrs))} not found during client waiting.")
 
 
 class PhoneLoginException(Exception):

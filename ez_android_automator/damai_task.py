@@ -14,7 +14,7 @@ from typing import Optional
 
 from ez_android_automator.client import ClientTask, StartAppStage, Stage, AndroidClient, ClientWaitTimeout, \
     parse_node_xyxy
-from ez_android_automator.ym_helper import YmClient, SliderSolver, CaptchaSolveError
+from ez_android_automator.ym_helper import SliderSolver, CaptchaSolveError
 
 
 class InterceptStage(Stage):
@@ -77,14 +77,11 @@ class CheckFareStage(Stage):
         self.audience_pre_set = False
 
     def run(self, client: AndroidClient):
-        t1 = time.time()
         client.refresh_xml(intercept=False)
         while len(client.find_xml_by_attr({'text': '购票须知'})) > 0:
             client.click_xml_node(client.rs[0])
             client.refresh_xml()
         client.wait_until_found({'resource-id': 'cn.damai:id/trade_project_detail_purchase_status_bar_container_fl'})
-        t2 = time.time()
-        print(t2 - t1)
         if not self.audience_pre_set:
             try:
                 client.wait_to_click({'resource-id': 'cn.damai:id/goto_setinfo_btn_text'})
@@ -135,18 +132,16 @@ class OutOfStockError(RuntimeError):
 
 
 class SelectDateStage(Stage):
-    def __init__(self, date_idx: list[int], level_idx: list[int], amount: int):
+    def __init__(self, date_idx: list[int], level_idx: list[int], amount: int, ignore_num: bool = False):
         super().__init__()
         self.date_idx = date_idx
         self.level_idx = level_idx
         self.amount = amount
+        self.ignore_num = ignore_num
 
     def run(self, client: AndroidClient):
-        t1 = time.time()
         client.wait_until_found({'resource-id': 'cn.damai:id/layout_perform_view'},
                                 intercept=False)
-        t2 = time.time()
-        print('costs', t2 - t1)
         rs_project = client.rs[0]
         rs_0 = rs_project.find_all(attrs={'resource-id': 'cn.damai:id/ll_perform_item'})
         chosen_date_idx = -1
@@ -176,13 +171,13 @@ class SelectDateStage(Stage):
         client.wait_until_found({'resource-id': 'cn.damai:id/img_jia'}, intercept=False)
         for i in range(self.amount - 1):
             client.click_xml_node(client.rs[0])
-        time.sleep(0.5)
-        client.refresh_xml(intercept=False)
-        client.find_xml_by_attr({'resource-id': 'cn.damai:id/tv_num'})
-        found = int(str(client.rs[0]['text']).removesuffix("张"))
-        if found != self.amount:
-            raise OutOfStockError(self.amount, found)
-        client.wait_to_click({'resource-id': 'cn.damai:id/btn_buy_view'})
+        if not self.ignore_num:
+            client.refresh_xml()
+            client.find_xml_by_attr({'resource-id': 'cn.damai:id/tv_num'})
+            found = int(str(client.rs[0]['text']).removesuffix("张"))
+            if found != self.amount:
+                raise OutOfStockError(self.amount, found)
+        client.wait_to_click({'resource-id': 'cn.damai:id/btn_buy_view'}, refresh_xml=self.ignore_num)
 
 
 class FireStage(Stage):
@@ -206,6 +201,12 @@ class FireStage(Stage):
                 client.click_xml_node(client.rs[0])
             if len(client.find_xml_by_attr({'text': '亲，请按照说明进行验证哦'})) > 0:
                 print('captcha triggered')
+                if len(client.find_xml_by_attr({'text': '在在加载验证码信息，请稍等'})) > 0:
+                    print('awaiting captcha to be loaded')
+                    continue
+                if len(client.find_xml_by_attr({'text': '请稍等片刻再点击刷新哦'})) > 0:
+                    print('captcha failed too many times')
+                    raise RuntimeError('failed to solve captcha in time.')
                 slider_node = client.find_xml_by_attr({'resource-id': 'scratch-captcha-btn'})[0]
                 rail_node = slider_node.parent
                 captcha_node = client.find_xml_by_attr({'resource-id': 'scratch-captcha-question-container'})[0].parent
@@ -221,7 +222,7 @@ class FireStage(Stage):
                 try:
                     right_x = self.captcha_parser.solve(captcha_img)
                 except CaptchaSolveError as e:
-                    print(f"验证码解析错误：{e.data['msg']}")
+                    print(f"failed to parse captcha on cloud：{e.data['msg']}")
                     client.device.touch.up(0, 0)
                     client.device.xpath.click('//android.view.View[@text=""]')
                     continue

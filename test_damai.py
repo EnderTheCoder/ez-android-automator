@@ -13,7 +13,7 @@ from ez_android_automator.damai_task import DaMaiBuyTask
 
 task = DaMaiBuyTask(
     [('祁佩璇', '152701199203060928')],
-    "厦门十个勤天",
+    "沈阳周深",
     None,
     [0],
     [0, 1, 2, 3, 4],
@@ -21,9 +21,8 @@ task = DaMaiBuyTask(
 )
 
 client = create_usb_client()
-client.perf_msg = True
+
 client.set_task(
     task
 )
-client.device.dump_hierarchy()
 client.run_current_task()
