@@ -13,7 +13,7 @@ from ez_android_automator.damai_task import DaMaiBuyTask
 
 task = DaMaiBuyTask(
     [('祁佩璇', '152701199203060928')],
-    "沈阳周深",
+    "北京王源",
     None,
     [0],
     [0, 1, 2, 3, 4],
