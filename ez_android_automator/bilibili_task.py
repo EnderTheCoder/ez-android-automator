@@ -12,7 +12,7 @@ from typing import Callable
 from .client import Stage, PublishClient, AndroidClient, PublishTask, \
     PhoneLoginTask, WaitCallBackStage, StatisticTask, TaskAsStage
 from .idm_task import IDMPullTask
-from .app_file import PullAccountTask, AppFilePkg
+from .app_file import AppFilePkg
 
 
 class OpenAppStage(Stage):
@@ -47,7 +47,6 @@ class PhoneAuthCodeStage(Stage):
 
     def run(self, client: AndroidClient):
         client.device.send_keys(self.code)
-
 
     def code_callback(self, code: str):
         self.code = code
