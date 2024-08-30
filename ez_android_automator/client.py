@@ -15,6 +15,7 @@ from typing import Callable, Any, Union, Optional
 
 import bs4
 import uiautomator2
+from adbutils import AdbError
 from bs4 import BeautifulSoup
 import time
 from .util import posix_path_join
@@ -89,6 +90,13 @@ class AndroidClient:
         self.parser: BeautifulSoup
         self.debug_msg = False
         self.perf_msg = False
+
+    def alive(self):
+        try:
+            self.device.window_size()
+            return True
+        except AdbError:
+            return False
 
     def restart_app(self, package_name: str, clear_data=False):
         """
@@ -351,7 +359,7 @@ class AndroidClient:
 
     def run_current_task(self, failure_callback: Callable = None, clear_task: bool = True):
         self.task.run(self)
-        if not self.task.is_finished and failure_callback is not None:
+        if self.task.is_exception() and failure_callback is not None:
             failure_callback(self)
         if clear_task:
             self.task = None
@@ -386,8 +394,8 @@ class AndroidClient:
     def is_usable(self):
         return self.task is None or self.task.is_finished() or self.task.is_exception() and not self.lock
 
-    def alive(self):
-        return self.device.alive() and self.device.agent_alive()
+    def clear_task(self):
+        self.task = None
 
     def intercept_xml(self, when: Callable, do: Callable):
         """
@@ -503,7 +511,8 @@ class ClientTask:
                 if self.handler is not None:
                     if self.handler(client, self, e):
                         continue
-
+                    else:
+                        break
                 else:
                     client.clear_xml_interceptors()
                     raise e
@@ -518,6 +527,9 @@ class ClientTask:
 
     def reset_stage_to(self, stage_idx: int):
         self.reset_stage_idx = stage_idx
+
+    def reset_stage(self):
+        self.current_stage_idx = 0
 
     def __lt__(self, other):
         return self.priority < other.priority

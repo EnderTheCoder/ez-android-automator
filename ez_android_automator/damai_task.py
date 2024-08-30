@@ -326,3 +326,17 @@ def damai_handler(_client: AndroidClient, _task: DaMaiBuyTask, _exception):
             _task.reset_stage_to(5)
             return True
     raise _exception
+
+
+def damai_handler_non_except(_client: AndroidClient, _task: DaMaiBuyTask, _exception):
+    if isinstance(_exception, OutOfStockError):
+        print(f'库存不足:{_exception.found}/{_exception.need}，重试中。')
+        if isinstance(_task.current_stage(), FireStage):
+            _task.reset_stage_to(_task.current_stage_idx - 1)
+            return True
+        if isinstance(_task.current_stage(), SelectDateStage):
+            _client.key_back()
+            _task.reset_stage_to(5)
+            return True
+    print('Giving up task')
+    return False
