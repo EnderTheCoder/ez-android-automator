@@ -13,9 +13,9 @@ from ez_android_automator.damai_task import DaMaiBuyTask
 
 task = DaMaiBuyTask(
     [('祁佩璇', '152701199203060928')],
-    "北京王源",
+    "深圳张杰",
     None,
-    [0],
+    [0, 1, 2],
     [0, 1, 2, 3, 4],
     os.environ.get("YM_TOKEN")
 )
