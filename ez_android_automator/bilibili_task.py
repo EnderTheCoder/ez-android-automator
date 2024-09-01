@@ -10,21 +10,25 @@ import time
 from typing import Callable
 
 from .client import Stage, PublishClient, AndroidClient, PublishTask, \
-    PhoneLoginTask, WaitCallBackStage, StatisticTask, TaskAsStage
+    PhoneLoginTask, WaitCallBackStage, StatisticTask, TaskAsStage, ClientWaitTimeout
 from .idm_task import IDMPullTask
 from .app_file import AppFilePkg
 
 
 class OpenAppStage(Stage):
-    def __init__(self, serial, clear_data: bool = False):
+    def __init__(self, clear_data: bool = False):
         self.clear_data = clear_data
-        super().__init__(serial)
+        super().__init__()
 
     def run(self, client: PublishClient):
         client.restart_app("tv.danmaku.bili", self.clear_data)
-        time.sleep(7)
-        if self.clear_data:
-            client.wait_to_click({'text': '同意并继续'})
+
+
+class PrepareStage(Stage):
+    def run(self, client: PublishClient):
+        client.intercept_to_click({'text': '始终允许'})
+        client.intercept_to_click({"text": "同意并继续"})
+        client.intercept_to_click({'resource-id': 'tv.danmaku.bili:id/count_down'})
 
 
 class BeforeLoginStage(Stage):
@@ -54,15 +58,14 @@ class PhoneAuthCodeStage(Stage):
 
 class PressPublishButtonStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({"resource-id": "tv.danmaku.bili:id/home_publish_icon"}, gap=3)
-        client.wait_to_click({"resource-id": "com.lbe.security.miui:id/permission_allow_button"})
+        client.wait_to_click({"content-desc": "发布内容,5之3,标签"}, gap=1)
 
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({'text': '视频'})
-        time.sleep(3)
-        client.device.click(200, 600)
+        client.wait_to_click({'text': '视频'}, timeout=10)
+        client.wait_to_click({'text': '视频'}, timeout=10)
+        client.wait_to_click({'resource-id': 'tv.danmaku.bili:id/sdv_cover'})
         client.wait_to_click({'text': '发布'})
 
 
@@ -79,14 +82,17 @@ class SetVideoOptionsStage(Stage):
 
 class StatisticCenterStage(Stage):
     def run(self, client: AndroidClient):
-        client.intercept_to_click({'resource-id': 'tv.danmaku.bili:id/count_down'})
+        try:
+            client.wait_until_disappear({'resource-id': 'tv.danmaku.bili:id/splash_interact_view'})
+        except ClientWaitTimeout:
+            pass
         client.wait_to_click({'text': '我的'})
         client.wait_to_click({'text': '稿件管理'})
 
 
 class GetStatisticStage(Stage):
-    def __init__(self, stage_serial: int, video_title: str, statistic_callback: Callable):
-        super().__init__(stage_serial)
+    def __init__(self, video_title: str, statistic_callback: Callable):
+        super().__init__()
         self.video_title = video_title
         self.statistic_callback = statistic_callback
 
@@ -121,20 +127,20 @@ class GetStatisticStage(Stage):
             'like': get_statistic_by_attr_name('点赞'),
             'comment': get_statistic_by_attr_name('评论'),
             'collect': get_statistic_by_attr_name('收藏'),
-            'coin': get_statistic_by_attr_name('投币'),
             'share': get_statistic_by_attr_name('分享')
         }
         self.statistic_callback(statistic)
-        pass
 
 
 class BilibiliStatisticTask(StatisticTask):
     def __init__(self, video_title):
         super().__init__()
         self.statistic = None
-        self.append(OpenAppStage(0))
-        self.append(StatisticCenterStage(1))
-        self.append(GetStatisticStage(2, video_title, self.statistic_callback))
+        self.append(PrepareStage())
+        self.append(OpenAppStage())
+        self.append(StatisticCenterStage())
+        self.append(GetStatisticStage(video_title, self.statistic_callback))
+        self.auto_serial()
 
     def statistic_callback(self, statistic: dict):
         self.statistic = statistic
@@ -149,20 +155,22 @@ class BilibiliPublishVideoTask(PublishTask):
         super().__init__(priority, title, content, video, '')
         task = IDMPullTask(video, download_timeout=download_timeout)
         self.stages.append(TaskAsStage(0, task))
-        self.stages.append(OpenAppStage(1))
+        self.stages.append(OpenAppStage())
         self.stages.append(PressPublishButtonStage(2))
         self.stages.append(ChooseFirstVideoStage(3))
         self.stages.append(SetVideoOptionsStage(4, self.content))
+        self.auto_serial()
 
 
 class BilibiliPhoneLoginTask(PhoneLoginTask):
     def __init__(self, phone: str):
         super().__init__(phone)
-        self.stages.append(OpenAppStage(0, True))
+        self.stages.append(OpenAppStage(True))
         self.stages.append(BeforeLoginStage(1, phone))
         auth_stage = PhoneAuthCodeStage(3)
         self.stages.append(WaitCallBackStage(2, 60, self.get_code, auth_stage.code_callback))
         self.stages.append(auth_stage)
+        self.auto_serial()
 
 
 class BilibiliFilePkg(AppFilePkg):
