@@ -15,10 +15,10 @@ class InputStage(Stage):
 
     def run(self, client: PublishClient):
         client.wait_to_click({'resource-id': 'idm.internet.download.manager.plus:id/fab_expand_menu_button'}, gap=1)
-        client.wait_to_click({'text': '添加链接'})
-        client.wait_to_click({'text': '下载链接'})
+        client.wait_to_click({'resource-id': 'idm.internet.download.manager.plus:id/action_add_link'})
+        client.wait_to_click({'resource-id': 'idm.internet.download.manager.plus:id/linkLL'})
         client.device.send_keys(self.url)
-        client.wait_to_click({'text': '连接'})
+        client.wait_to_click({'resource-id': 'idm.internet.download.manager.plus:id/buttonDefaultPositive'})
         client.wait_to_click({'text': '开始'})
         try:
             client.wait_to_click({'text': '确认'})

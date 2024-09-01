@@ -33,10 +33,10 @@ class BeforeLoginStage(Stage):
         self.phone = phone
 
     def run(self, client: AndroidClient):
-        client.wait_to_click({"content-desc": "登录，按钮"})
-        client.wait_to_click({"text": "请输入手机号码"})
+        client.wait_to_click({"resource-id": "tv.danmaku.bili:id/avatar_layout"})
+        client.wait_to_click({"resource-id": "tv.danmaku.bili:id/et_phone_number"})
         client.device.send_keys(self.phone)
-        client.wait_to_click({"text": "获取验证码"})
+        client.wait_to_click({"resource-id": "tv.danmaku.bili:id/get_auth_code"})
         client.wait_to_click({"text": "同意并继续"})
 
 
@@ -54,15 +54,15 @@ class PhoneAuthCodeStage(Stage):
 
 class PressPublishButtonStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({"content-desc": "发布内容,5之3,标签"}, gap=3)
-        client.wait_to_click({"text": "全部允许"})
+        client.wait_to_click({"resource-id": "tv.danmaku.bili:id/home_publish_icon"}, gap=3)
+        client.wait_to_click({"resource-id": "com.lbe.security.miui:id/permission_allow_button"})
 
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
         client.wait_to_click({'text': '视频'})
-        time.sleep(7)
-        client.device.click(190, 970)
+        time.sleep(3)
+        client.device.click(200, 600)
         client.wait_to_click({'text': '发布'})
 
 
@@ -72,7 +72,7 @@ class SetVideoOptionsStage(Stage):
         self.content = content
 
     def run(self, client: PublishClient):
-        client.wait_to_click({"text": "合适的标题可以吸引更多人观看～"})
+        client.wait_to_click({"resource-id": "tv.danmaku.bili:id/et_title"})
         client.device.send_keys(self.content)
         client.wait_to_click({"text": "发布"})
 

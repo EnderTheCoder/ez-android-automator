@@ -9,8 +9,9 @@
 import time
 from typing import Callable
 
+from ez_android_automator.app_file import AppFilePkg
 from ez_android_automator.client import Stage, PublishTask, PublishClient, AndroidClient, \
-    PhoneLoginTask, WaitCallBackStage, PasswordLoginTask, ClientWaitTimeout, TaskAsStage, StatisticTask
+    PhoneLoginTask, WaitCallBackStage, TaskAsStage, StatisticTask
 from ez_android_automator.idm_task import IDMPullTask
 
 
@@ -35,11 +36,14 @@ class PressPublishButtonStage(Stage):
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
+        # client.wait_to_click({'resource-id': 'com.lbe.security.miui:id/permission_allow_foreground_only_button'})
+        # client.wait_to_click({'resource-id': 'com.lbe.security.miui:id/permission_allow_foreground_only_button'})
         client.wait_to_click({'text': '相册'})
-        client.wait_until_found({'text': '视频'})
+        # client.wait_to_click({"resource-id": "com.lbe.security.miui:id/permission_allow_button"})
         client.wait_to_click({'text': '视频'})
         time.sleep(2)
         client.device.click(200, 550)
+        client.wait_to_click({'text': '下一步'})
         client.wait_to_click({'text': '下一步'})
 
 
@@ -52,7 +56,7 @@ class SetVideoOptionsStage(Stage):
         client.wait_to_click({'text': '添加作品描述..'})
         client.device.send_keys(self.content)
         client.key_back()
-        client.find_xml_by_attr({'text': '发布'})
+        client.find_xml_by_attr({'content-desc': '发作品'})
         client.click_xml_node(client.rs[0])
 
 
@@ -77,32 +81,9 @@ class PhoneAuthCodeStage(Stage):
 
     def run(self, client: AndroidClient):
         client.device.send_keys(self.code)
-        client.wait_to_click({'text': '完成'})
 
     def code_callback(self, code: str):
         self.code = code
-
-
-class PasswordLoginStage(Stage):
-    def __init__(self, serial, account, password):
-        super().__init__(serial)
-        self.account = account
-        self.password = password
-
-    def run(self, client: AndroidClient):
-        client.wait_to_click({'text': '我'})
-        client.wait_to_click({'text': '密码登录'})
-        client.device.send_keys(self.account)
-        try:
-            client.wait_to_click({'text': '请先勾选，同意后再进行登录'})
-            client.wait_to_click({'text': '请输入密码'})
-            client.device.send_keys(self.password)
-            client.wait_to_click({'text': '登录'})
-        except ClientWaitTimeout as e:
-            client.wait_to_click({'text': '请输入密码'})
-            client.device.send_keys(self.password)
-            client.wait_to_click({'text': '登录'})
-            client.wait_to_click({'text': '同意并登录'})
 
 
 class StatisticCenterStage(Stage):
@@ -141,9 +122,9 @@ class DouyinVideoPublishTask(PublishTask):
     Publish a video on Douyin.
     """
 
-    def __init__(self, priority: int, title: str, content: str, video: str):
+    def __init__(self, priority: int, title: str, content: str, video: str, download_timeout: int = 120):
         super().__init__(priority, title, content, video, '')
-        task = IDMPullTask(video)
+        task = IDMPullTask(video, download_timeout=download_timeout)
         self.stages.append(TaskAsStage(0, task))
         self.stages.append(OpenAppStage(1))
         self.stages.append(PressPublishButtonStage(2))
@@ -161,11 +142,7 @@ class DouyinPhoneLoginTask(PhoneLoginTask):
         self.stages.append(auth_stage)
 
 
-class DouyinPasswordLoginTask(PasswordLoginTask, PhoneLoginTask):
-    def __init__(self, account: str, password: str):
-        super().__init__(account, password)
-        self.stages.append(OpenAppStage(0, True))
-        self.stages.append(PasswordLoginStage(1, account, password))
-        auth_stage = PhoneAuthCodeStage(3)
-        self.stages.append(WaitCallBackStage(2, 60, self.get_code, auth_stage.code_callback))
-        self.stages.append(auth_stage)
+douyin_file_pkg = AppFilePkg('com.ss.android.ugc.aweme', time.time(),
+                             ['app_accs', 'app_textures', 'cache', 'shared_prefs', 'app_webview',
+                              'code_cache', 'small_emoji_res', 'app_librarian',
+                              'databases', 'app_sys-plat', 'awemeSplashCache', 'files'])
