@@ -79,7 +79,7 @@ class SetVideoOptionsStage(Stage):
 
 class StatisticCenterStage(Stage):
     def run(self, client: AndroidClient):
-        time.sleep(7)  # wait for ad to be finished
+        client.intercept_to_click({'resource-id': 'tv.danmaku.bili:id/count_down'})
         client.wait_to_click({'text': '我的'})
         client.wait_to_click({'text': '稿件管理'})
 
@@ -91,7 +91,15 @@ class GetStatisticStage(Stage):
         self.statistic_callback = statistic_callback
 
     def run(self, client: AndroidClient):
-        client.wait_until_found({'text': '数据'})  # wait for list to be loaded
+        client.wait_to_click({'resource-id': 'tv.danmaku.bili:id/upper_search_et'}, gap=1)
+        client.wait_to_click({'resource-id': 'tv.danmaku.bili:id/upper_search_et'})
+        client.wait_until_found({'resource-id': 'tv.danmaku.bili:id/upper_search_cancel_tv'})
+        client.wait_to_click({'resource-id': 'tv.danmaku.bili:id/upper_search_et'})
+        time.sleep(1)
+        client.device.send_keys(self.video_title)
+        client.wait_until_found({'text': self.video_title, 'resource-id': 'tv.danmaku.bili:id/upper_search_et'})
+        client.key_enter()
+        client.wait_until_found({'resource-id': 'tv.danmaku.bili:id/video_layout'})
         client.wait_until_found({'text': self.video_title})
         parser = client.find_xml_by_attr({'text': self.video_title})
         parser = parser[0]
