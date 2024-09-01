@@ -146,12 +146,21 @@ class SelectDateStage(Stage):
         rs_project = client.rs[0]
         rs_0 = rs_project.find_all(attrs={'resource-id': 'cn.damai:id/ll_perform_item'})
         chosen_date_idx = -1
-        for idx in self.date_idx:
-            if rs_0[idx].find(attrs={'text': '无票'}) is None:
-                chosen_date_idx = idx
-                break
-            if idx == self.date_idx[-1]:
-                raise OutOfStockError(self.amount, 0)
+        try:
+            for idx in self.date_idx:
+                if rs_0[idx].find(attrs={'text': '无票'}) is None:
+                    chosen_date_idx = idx
+                    break
+                if idx == self.date_idx[-1]:
+                    raise OutOfStockError(self.amount, 0)
+        except OutOfStockError as e:
+            # if len(rs_0) <= 1:
+            raise e
+            # else:
+            #     while True:
+            #         for idx, r_elem in enumerate(rs_0):
+            #             if idx not in self.date_idx:
+
         client.click_xml_node(rs_0[chosen_date_idx])
         while True:
             client.refresh_xml(intercept=False)
@@ -199,7 +208,12 @@ class FireStage(Stage):
             print('current app:', client.device.app_current())
             client.refresh_xml(intercept=False)
             if len(client.find_xml_by_attr({'text': '提交订单'})) > 0:
-                client.click_xml_node(client.rs[0])
+                submit_rs = client.rs
+                if len(client.find_xml_by_attr(
+                        {'checked': 'false', 'checkable': 'true', 'resource-id': 'cn.damai:id/checkbox'})) > 0:
+                    for x in client.rs:
+                        client.click_xml_node(x)
+                client.click_xml_node(submit_rs[0])
             if len(client.find_xml_by_attr({'text': '亲，请按照说明进行验证哦'})) > 0:
                 print('captcha triggered')
                 if len(client.find_xml_by_attr({'text': '在在加载验证码信息，请稍等'})) > 0:
@@ -218,6 +232,7 @@ class FireStage(Stage):
 
                 client.device.touch.down((slider_xyxy[0] + slider_xyxy[2]) / 2, (slider_xyxy[1] + slider_xyxy[3]) / 2)
                 client.device.touch.move(rail_xyxy[2], (rail_xyxy[1] + rail_xyxy[3]) / 2)
+                time.sleep(0.3)
                 captcha_img = client.shot_xml(captcha_node)
                 captcha_img.save('captcha.jpg')
                 try:
@@ -311,3 +326,17 @@ def damai_handler(_client: AndroidClient, _task: DaMaiBuyTask, _exception):
             _task.reset_stage_to(5)
             return True
     raise _exception
+
+
+def damai_handler_non_except(_client: AndroidClient, _task: DaMaiBuyTask, _exception):
+    if isinstance(_exception, OutOfStockError):
+        print(f'库存不足:{_exception.found}/{_exception.need}，重试中。')
+        if isinstance(_task.current_stage(), FireStage):
+            _task.reset_stage_to(_task.current_stage_idx - 1)
+            return True
+        if isinstance(_task.current_stage(), SelectDateStage):
+            _client.key_back()
+            _task.reset_stage_to(5)
+            return True
+    print('Giving up task')
+    return False

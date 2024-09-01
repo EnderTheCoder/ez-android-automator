@@ -19,7 +19,7 @@ class Manager:
         self.max_priority = 7
 
     def add_client(self, _client: client.AndroidClient):
-        self.clients[_client.device.address] = _client
+        self.clients[_client.device.serial] = _client
 
     def push_task(self, task: client.ClientTask):
         self.tasks.put((task.priority, task))
@@ -35,7 +35,7 @@ class Manager:
 
     def run(self):
         while True:
-            if self.tasks.empty():
+            if not self.tasks.empty():
                 for _client in self.clients.values():
                     if _client.is_usable():
                         task = self.tasks.get()
@@ -43,9 +43,13 @@ class Manager:
 
                         def failure_callback(__client: client.AndroidClient):
                             __client.task.shift_down_priority()
-                            if __client.task.priority > self.max_priority:
+                            __client.task.reset_stage()
+                            if __client.task.priority < self.max_priority:
+                                print(f'Task {type(__client.task).__name__} failed on device {__client.device.serial}, '
+                                      f'reset its priority to {__client.task.priority} and wait for a retry.')
                                 self.push_task(__client.task)
-
+                                __client.clear_task()
+                        print(f'Start task {type(task[1]).__name__} on device {_client.device.serial}.')
                         _client.run_current_task_async(failure_callback, False)
                     else:
                         self.idle_task()
@@ -61,7 +65,7 @@ class Manager:
         :return: None
         """
         for serial in self.clients.keys():
-            if not self.clients[serial].alive:
+            if not self.clients[serial].alive():
                 warnings.warn(f'Client {serial} disconnected.')
                 del self.clients[serial]
 
