@@ -200,7 +200,7 @@ class AndroidClient:
         if self.is_file(path, su):
             raise RuntimeError(f'Path {path} is a file.')
         res = []
-        for output in self.shell(['ls', path], su).output.split('\n'):
+        for output in self.shell(['ls', path, '-1'], su).output.split('\n'):
             if output != '':
                 res.append(output.strip())
         return res
