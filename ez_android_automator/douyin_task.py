@@ -143,6 +143,5 @@ class DouyinPhoneLoginTask(PhoneLoginTask):
 
 
 douyin_file_pkg = AppFilePkg('com.ss.android.ugc.aweme', time.time(),
-                             ['app_accs', 'app_textures', 'cache', 'shared_prefs', 'app_webview',
-                              'code_cache', 'small_emoji_res', 'app_librarian',
-                              'databases', 'app_sys-plat', 'awemeSplashCache', 'files'])
+                             ['app_accs', 'cache', 'shared_prefs', 'app_librarian'
+                              'code_cache', 'databases', 'awemeSplashCache', 'files'])

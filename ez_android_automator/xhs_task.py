@@ -7,6 +7,7 @@
 @Motto：The only one true Legendary Grandmaster.
 """
 import time
+from ez_android_automator.app_file import AppFilePkg
 from ez_android_automator.client import PublishTask, Stage, PublishClient, PhoneLoginTask, \
     PasswordLoginTask, AndroidClient, WaitCallBackStage, TaskAsStage
 from ez_android_automator.idm_task import IDMPullTask
@@ -127,3 +128,8 @@ class XhsPasswordLoginTask(PasswordLoginTask):
         super().__init__(account, password)
         self.stages.append(OpenAppStage(0, True))
         self.stages.append(PasswordLoginStage(1, account, password))
+
+
+xhs_file_pkg = AppFilePkg('com.xingin.xhs', time.time(),
+                          ['app_asserts', 'app_xylog_v2', 'files',
+                           'app_p_mark', 'app_xy_robust', 'databases', 'cache', 'shared_prefs'])

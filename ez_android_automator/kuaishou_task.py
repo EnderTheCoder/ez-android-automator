@@ -8,6 +8,8 @@
 """
 import time
 from typing import Callable
+
+from ez_android_automator.app_file import AppFilePkg
 from ez_android_automator.client import Stage, PublishTask, PublishClient, AndroidClient, \
     PhoneLoginTask, WaitCallBackStage, ClientWaitTimeout, PasswordLoginTask, TaskAsStage
 from ez_android_automator.idm_task import IDMPullTask
@@ -134,3 +136,8 @@ class KuaishouPasswordLoginTask(PasswordLoginTask):
         super().__init__(account, password)
         self.stages.append(OpenAppStage(0, True))
         self.stages.append(PasswordLoginStage(1, account, password))
+
+
+kuaishou_file_pkg = AppFilePkg('com.smile.gifmaker', time.time(),
+                               ['app_.post', 'app_cache', 'app_live_rich_text', 'app_workspace',
+                                'cache', 'code_cache', 'databases', 'files', 'robust2', 'safe_mode', 'shared_prefs'])
