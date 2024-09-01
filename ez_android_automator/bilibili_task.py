@@ -25,6 +25,9 @@ class OpenAppStage(Stage):
 
 
 class PrepareStage(Stage):
+    """
+    Common stage for some unexpected pop-ups.
+    """
     def run(self, client: PublishClient):
         client.intercept_to_click({'text': '始终允许'})
         client.intercept_to_click({"text": "同意并继续"})
