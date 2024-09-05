@@ -13,6 +13,17 @@ from ez_android_automator.client import PublishTask, Stage, PublishClient, Phone
 from ez_android_automator.idm_task import IDMPullTask
 
 
+class PrepareStage(Stage):
+    """
+    Common stage for some unexpected pop-ups.
+    """
+
+    def run(self, client: PublishClient):
+        client.intercept_to_click({'text': '我知道了'})
+        client.intercept_to_click({'text': '始终允许'})
+        client.intercept_to_click({'text': '仅在使用中允许'})
+
+
 class OpenAppStage(Stage):
 
     def __init__(self, serial, clear_data: bool = False):
@@ -28,13 +39,13 @@ class OpenAppStage(Stage):
 class PressPublishButtonStage(Stage):
     def run(self, client: PublishClient):
         client.wait_to_click({'content-desc': '发布'})
+        time.sleep(2)
 
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({'text': '视频'}, gap=1)
-        client.wait_until_found({'text': '视频'})
-        client.device.click(310, 445)
+        client.wait_to_click({'text': '视频'}, timeout=10)
+        client.wait_to_click({'resource-id': 'com.xingin.xhs:id/idv'})
         client.wait_to_click({'content-desc': '下一步'})
         client.wait_to_click({'text': '下一步'})
 

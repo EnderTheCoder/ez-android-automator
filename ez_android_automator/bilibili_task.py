@@ -80,6 +80,7 @@ class SetVideoOptionsStage(Stage):
     def run(self, client: PublishClient):
         client.wait_to_click({"resource-id": "tv.danmaku.bili:id/et_title"})
         client.device.send_keys(self.content)
+        client.key_back()
         client.wait_to_click({"resource-id": "tv.danmaku.bili:id/tv_upper_publish"})
 
 
