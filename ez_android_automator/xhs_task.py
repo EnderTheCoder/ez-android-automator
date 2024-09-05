@@ -114,9 +114,9 @@ class XhsPublishVideoTask(PublishTask):
     Publish a video on Xiaohongshu.
     """
 
-    def __init__(self, priority: int, title: str, content: str, video: str):
+    def __init__(self, priority: int, title: str, content: str, video: str, download_timeout: int = 120):
         super().__init__(priority, title, content, video, '')
-        task = IDMPullTask(video)
+        task = IDMPullTask(video, download_timeout=download_timeout)
         self.stages.append(TaskAsStage(0, task))
         self.stages.append(OpenAppStage(1))
         self.stages.append(PressPublishButtonStage(2))
