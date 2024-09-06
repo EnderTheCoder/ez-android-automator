@@ -203,7 +203,6 @@ class FireStage(Stage):
 
         client.wait_until_found({'resource-id': 'cn.damai:id/checkbox'},
                                 intercept=False, timeout=20)
-        print('current app:', client.device.app_current())
         while client.device.app_current()['package'] == 'cn.damai':
             print('current app:', client.device.app_current())
             client.refresh_xml(intercept=False)
