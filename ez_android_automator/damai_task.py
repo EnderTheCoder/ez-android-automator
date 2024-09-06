@@ -32,6 +32,7 @@ class InterceptStage(Stage):
         client.intercept_to_click({'text': '不开启'})
         client.intercept_to_click({'text': ''})
         client.intercept_to_click({'resource-id': 'cn.damai:id/homepage_eva_cancel'})
+        client.intercept_to_click({'resource-id': 'cn.damai:id/new_person_dialog_top_close_iv'})
 
 
 class SearchStage(Stage):
