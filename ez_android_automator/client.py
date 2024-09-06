@@ -751,3 +751,8 @@ class WaitStage(Stage):
 
     def run(self, client: AndroidClient):
         time.sleep(self.timeout)
+
+
+class UnresolvableLogicError(RuntimeError):
+    def __init__(self, cause):
+        super().__init__(f'Task is terminated due to unresolvable logic error: {cause}')
