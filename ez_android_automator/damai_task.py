@@ -255,6 +255,13 @@ class FireStage(Stage):
                 for i in range(10):
                     last_pos[0] = random.randrange(end_at[0], last_pos[0])
                     last_pos[1] = random.randrange(end_at[1] - 50, end_at[1] + 50)
+
+                    # to escape the randrange exception
+                    if last_pos[0] == end_at[0]:
+                        last_pos[0] += 1
+                    if last_pos[1] == end_at[1]:
+                        last_pos[1] += 1
+
                     client.device.touch.move(last_pos[0], last_pos[1])
 
                 client.device.touch.up(end_at[0], end_at[1])
