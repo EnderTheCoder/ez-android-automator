@@ -28,6 +28,7 @@ class PrepareStage(Stage):
     """
     Common stage for some unexpected pop-ups.
     """
+
     def run(self, client: PublishClient):
         client.intercept_to_click({'text': '跳过'})
         client.intercept_to_click({'text': '始终允许'})
@@ -158,6 +159,7 @@ class BilibiliPublishVideoTask(PublishTask):
 
     def __init__(self, priority: int, title: str, content: str, video: str, download_timeout: int = 120):
         super().__init__(priority, title, content, video, '')
+        self.append(PrepareStage())
         task = IDMPullTask(video, download_timeout=download_timeout)
         self.stages.append(TaskAsStage(0, task))
         self.stages.append(OpenAppStage())
