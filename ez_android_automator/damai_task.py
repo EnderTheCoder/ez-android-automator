@@ -229,9 +229,11 @@ class FireStage(Stage):
                 slider_xyxy = parse_node_xyxy(slider_node)
                 rail_xyxy = parse_node_xyxy(rail_node)
                 captcha_xyxy = parse_node_xyxy(captcha_node)
-
                 client.device.touch.down((slider_xyxy[0] + slider_xyxy[2]) / 2, (slider_xyxy[1] + slider_xyxy[3]) / 2)
-                client.device.touch.move(rail_xyxy[2], (rail_xyxy[1] + rail_xyxy[3]) / 2)
+
+                last_pos = [rail_xyxy[2], int((rail_xyxy[1] + rail_xyxy[3]) / 2)]
+                client.device.touch.move(last_pos[0], last_pos[1])
+
                 time.sleep(0.3)
                 captcha_img = client.shot_xml(captcha_node)
                 captcha_img.save('captcha.jpg')
@@ -242,12 +244,19 @@ class FireStage(Stage):
                     client.device.touch.up(0, 0)
                     client.device.xpath.click('//android.view.View[@text=""]')
                     continue
+
                 w, h = client.device.window_size()
                 side_offset = (w - (captcha_xyxy[2] - captcha_xyxy[0])) / 2
 
                 end_at = right_x + side_offset, (rail_xyxy[1] + rail_xyxy[3]) / 2 + random.randrange(-50, 50)
 
                 client.device.touch.move(end_at[0], end_at[1])
+
+                for i in range(10):
+                    last_pos[0] = random.randrange(end_at[0], last_pos[0])
+                    last_pos[1] = random.randrange(end_at[1] - 50, end_at[1] + 50)
+                    client.device.touch.move(last_pos[0], last_pos[1])
+
                 client.device.touch.up(end_at[0], end_at[1])
                 print('captcha complete')
                 pass
