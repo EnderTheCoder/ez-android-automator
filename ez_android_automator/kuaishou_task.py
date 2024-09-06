@@ -7,10 +7,23 @@
 @Motto：one coin
 """
 import time
-from typing import Callable
+from ez_android_automator.app_file import AppFilePkg
 from ez_android_automator.client import Stage, PublishTask, PublishClient, AndroidClient, \
     PhoneLoginTask, WaitCallBackStage, ClientWaitTimeout, PasswordLoginTask, TaskAsStage
 from ez_android_automator.idm_task import IDMPullTask
+
+
+class PrepareStage(Stage):
+    """
+    Common stage for some unexpected pop-ups.
+    """
+    def run(self, client: PublishClient):
+        client.intercept_to_click({'text': '我知道了'})
+        client.intercept_to_click({'text': '始终允许'})
+        client.intercept_to_click({'text': '一键开启'})
+        client.intercept_to_click({'text': '仅在使用中允许'})
+        client.intercept_to_click({'text': '好的'})
+        client.intercept_to_click({'text': '取消'})
 
 
 class OpenAppStage(Stage):
@@ -28,19 +41,17 @@ class OpenAppStage(Stage):
 
 class PressPublishButtonStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({'resource-id': 'com.smile.gifmaker:id/shoot_container'}, gap=3)
+        client.wait_to_click({'resource-id': 'com.smile.gifmaker:id/shoot_container'},timeout=10)
 
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({'text': '相册'})
-        client.wait_until_found({'text': '视频'})
         client.wait_to_click({'text': '视频'})
-        client.wait_until_found({'text': '视频'})
-        client.device.click(300, 440)
-        client.wait_to_click({'text': '下一步(1)'})
-        client.wait_until_found({'text': '下一步'})
-        client.wait_to_click({'text': '下一步'})
+        client.wait_to_click({'text': '相册'},timeout=10)
+        client.wait_to_click({'text': '视频'},timeout=10)
+        client.wait_to_click({'resource-id': 'com.smile.gifmaker:id/media_pick_num_area'})
+        client.wait_to_click({'resource-id': 'com.smile.gifmaker:id/next_step'})
+        client.wait_to_click({'resource-id': 'com.smile.gifmaker:id/next_step_button'},timeout=10)
 
 
 class SetVideoOptionsStage(Stage):
@@ -49,9 +60,9 @@ class SetVideoOptionsStage(Stage):
         self.content = content
 
     def run(self, client: PublishClient):
-        client.wait_to_click({'text': '添加合适的话题和描述，作品能获得更多推荐'})
+        client.wait_to_click({'resource-id': 'com.smile.gifmaker:id/editor_container'})
         client.device.send_keys(self.content)
-        client.wait_to_click({'text': '发布'})
+        client.wait_to_click({'resource-id': 'com.smile.gifmaker:id/publish_button'})
 
 
 class BeforeLoginStage(Stage):
@@ -109,9 +120,9 @@ class KuaishouPublishVideoTask(PublishTask):
     Publish a video on Kuaishou.
     """
 
-    def __init__(self, priority: int, title: str, content: str, video: str):
+    def __init__(self, priority: int, title: str, content: str, video: str, download_timeout: int = 120):
         super().__init__(priority, title, content, video, '')
-        task = IDMPullTask(video)
+        task = IDMPullTask(video, download_timeout=download_timeout)
         self.stages.append(TaskAsStage(0, task))
         self.stages.append(OpenAppStage(1))
         self.stages.append(PressPublishButtonStage(2))
@@ -134,3 +145,8 @@ class KuaishouPasswordLoginTask(PasswordLoginTask):
         super().__init__(account, password)
         self.stages.append(OpenAppStage(0, True))
         self.stages.append(PasswordLoginStage(1, account, password))
+
+
+kuaishou_file_pkg = AppFilePkg('com.smile.gifmaker', time.time(),
+                               ['app_.post', 'app_cache', 'app_live_rich_text', 'app_workspace',
+                                'cache', 'code_cache', 'databases', 'files', 'robust2', 'safe_mode', 'shared_prefs'])

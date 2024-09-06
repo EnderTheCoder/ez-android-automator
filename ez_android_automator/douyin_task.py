@@ -15,6 +15,18 @@ from ez_android_automator.client import Stage, PublishTask, PublishClient, Andro
 from ez_android_automator.idm_task import IDMPullTask
 
 
+class PrepareStage(Stage):
+    """
+    Common stage for some unexpected pop-ups.
+    """
+
+    def run(self, client: PublishClient):
+        client.intercept_to_click({'text': '关闭'})
+        client.intercept_to_click({'text': '以后再说'})
+        client.intercept_to_click({'text': '始终允许'})
+        client.intercept_to_click({'text': '仅在使用中允许'})
+
+
 class OpenAppStage(Stage):
     def __init__(self, serial, clear_data: bool = False):
         self.clear_data = clear_data
@@ -143,6 +155,6 @@ class DouyinPhoneLoginTask(PhoneLoginTask):
 
 
 douyin_file_pkg = AppFilePkg('com.ss.android.ugc.aweme', time.time(),
-                             ['app_accs', 'app_textures', 'cache', 'shared_prefs', 'app_webview',
-                              'code_cache', 'small_emoji_res', 'app_librarian',
-                              'databases', 'app_sys-plat', 'awemeSplashCache', 'files'])
+                             ['app_accs', 'app_dex', 'app_librarian', 'app_pigeonShopInfoCache', 'app_sys-plat',
+                              'app_textures', 'app_webview', 'app_webview_com.ss.android.ugc.aweme:push', 'cache',
+                              'shared_prefs', 'code_cache', 'databases', 'awemeSplashCache', 'files', 'small_emoji_res'])

@@ -28,7 +28,9 @@ class PrepareStage(Stage):
     """
     Common stage for some unexpected pop-ups.
     """
+
     def run(self, client: PublishClient):
+        client.intercept_to_click({'text': '跳过'})
         client.intercept_to_click({'text': '始终允许'})
         client.intercept_to_click({"text": "同意并继续"})
         client.intercept_to_click({'resource-id': 'tv.danmaku.bili:id/count_down'})
@@ -69,7 +71,7 @@ class ChooseFirstVideoStage(Stage):
         client.wait_to_click({'text': '视频'}, timeout=10)
         client.wait_to_click({'text': '视频'}, timeout=10)
         client.wait_to_click({'resource-id': 'tv.danmaku.bili:id/sdv_cover'})
-        client.wait_to_click({'text': '发布'})
+        client.wait_to_click({'text': '发布'}, gap=2)
 
 
 class SetVideoOptionsStage(Stage):
@@ -80,7 +82,8 @@ class SetVideoOptionsStage(Stage):
     def run(self, client: PublishClient):
         client.wait_to_click({"resource-id": "tv.danmaku.bili:id/et_title"})
         client.device.send_keys(self.content)
-        client.wait_to_click({"text": "发布"})
+        client.key_back()
+        client.wait_to_click({"resource-id": "tv.danmaku.bili:id/tv_upper_publish"})
 
 
 class StatisticCenterStage(Stage):
@@ -156,6 +159,7 @@ class BilibiliPublishVideoTask(PublishTask):
 
     def __init__(self, priority: int, title: str, content: str, video: str, download_timeout: int = 120):
         super().__init__(priority, title, content, video, '')
+        self.append(PrepareStage())
         task = IDMPullTask(video, download_timeout=download_timeout)
         self.stages.append(TaskAsStage(0, task))
         self.stages.append(OpenAppStage())

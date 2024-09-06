@@ -18,7 +18,7 @@ import uiautomator2
 from adbutils import AdbError
 from bs4 import BeautifulSoup
 import time
-from .util import posix_path_join
+from .util import posix_path_join, remote_file_path_escape
 
 
 def create_network_client(addr):
@@ -178,6 +178,7 @@ class AndroidClient:
         Raises:
             FileNotFoundError
         """
+        path = remote_file_path_escape(path)
         ret = self.shell(['file', path], su).output.strip()
         if ': cannot open' in ret:
             raise FileNotFoundError(path)
