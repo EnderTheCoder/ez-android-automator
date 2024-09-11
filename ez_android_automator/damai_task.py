@@ -191,10 +191,11 @@ class SelectDateStage(Stage):
 
 
 class FireStage(Stage):
-    def __init__(self, need: int, ym_token: str):
+    def __init__(self, need: int, ym_token: Optional[str]):
         super().__init__()
         self.need = need
-        self.captcha_parser = SliderSolver(ym_token)
+        if ym_token is not None:
+            self.captcha_parser = SliderSolver(ym_token)
 
     def run(self, client: AndroidClient):
         client.refresh_xml(intercept=False)
@@ -203,67 +204,72 @@ class FireStage(Stage):
 
         client.wait_until_found({'text': '确认订单'},
                                 intercept=False, timeout=10)
-        print('current app:', client.device.app_current())
         while client.device.app_current()['package'] == 'cn.damai':
-            print('current app:', client.device.app_current())
-            client.refresh_xml(intercept=False)
+            print('current app:', client.device.app_current()['package'])
             if len(client.find_xml_by_attr({'text': '提交订单'})) > 0:
                 submit_rs = client.rs
                 if len(client.find_xml_by_attr(
                         {'checked': 'false', 'checkable': 'true', 'resource-id': 'cn.damai:id/checkbox'})) > 0:
                     for x in client.rs:
+                        print('Unchecked audience detected')
                         client.click_xml_node(x)
+                print('Submitting order')
                 client.click_xml_node(submit_rs[0])
+            client.refresh_xml()
             if len(client.find_xml_by_attr({'text': '亲，请按照说明进行验证哦'})) > 0:
                 print('captcha triggered')
-                while True:
-                    client.refresh_xml()
-                    if len(client.find_xml_by_attr({'text': '亲，请按照说明进行验证哦'})) == 0:
-                        print('captcha out')
-                        break
-                # if len(client.find_xml_by_attr({'text': '在在加载验证码信息，请稍等'})) > 0:
-                #     print('awaiting captcha to be loaded')
-                #     continue
-                # if len(client.find_xml_by_attr({'text': '请稍等片刻再点击刷新哦'})) > 0:
-                #     print('captcha failed too many times')
-                #     raise RuntimeError('failed to solve captcha in time.')
-                # slider_node = client.find_xml_by_attr({'resource-id': 'scratch-captcha-btn'})[0]
-                # rail_node = slider_node.parent
-                # captcha_node = client.find_xml_by_attr({'resource-id': 'scratch-captcha-question-container'})[0].parent
-                #
-                # slider_xyxy = parse_node_xyxy(slider_node)
-                # rail_xyxy = parse_node_xyxy(rail_node)
-                #
-                # client.device.touch.down((slider_xyxy[0] + slider_xyxy[2]) / 2, (slider_xyxy[1] + slider_xyxy[3]) / 2)
-                #
-                # slider_center_cur = [(slider_xyxy[0] + slider_xyxy[2]) / 2, (slider_xyxy[1] + slider_xyxy[3]) / 2]
-                #
-                # t1 = time.time()
-                # captcha_try_cnt = 0
-                # while True:
-                #     captcha_try_cnt += 1
-                #     slider_center_cur[0] += 50
-                #     slider_center_cur[1] = (slider_xyxy[1] + slider_xyxy[3]) / 2 + random.randrange(-2, 2)
-                #
-                #     if slider_center_cur[0] > rail_xyxy[2]:
-                #         print('Captcha FAIL')
-                #         client.device.touch.up(0, 0)
-                #         client.device.xpath.click('//android.view.View[@text=""]')
-                #         break
-                #
-                #     client.device.touch.move(slider_center_cur[0], slider_center_cur[1])
-                #
-                #     captcha_img = client.shot_xml(captcha_node)
-                #     try:
-                #         self.captcha_parser.solve(captcha_img)
-                #         client.device.touch.up(slider_center_cur[0] + 10, slider_center_cur[1] + 10)
-                #         print('Solve SUCCESS')
-                #         break
-                #     except CaptchaSolveError as e:
-                #         print(f'Captcha Solve attempt failed on[{captcha_try_cnt}]')
-                #         pass
-                # t2 = time.time()
-                # print(f'Captcha solve elapsed {t2 - t1:.2f} seconds')
+                if self.captcha_parser is None:
+                    while True:
+                        client.refresh_xml()
+                        if len(client.find_xml_by_attr({'text': '亲，请按照说明进行验证哦'})) == 0:
+                            print('captcha out')
+                            break
+                else:
+                    if len(client.find_xml_by_attr({'text': '在在加载验证码信息，请稍等'})) > 0:
+                        print('awaiting captcha to be loaded')
+                        continue
+                    if len(client.find_xml_by_attr({'text': '请稍等片刻再点击刷新哦'})) > 0:
+                        print('captcha failed too many times')
+                        raise RuntimeError('failed to solve captcha in time.')
+                    slider_node = client.find_xml_by_attr({'resource-id': 'scratch-captcha-btn'})[0]
+                    rail_node = slider_node.parent
+                    captcha_node = client.find_xml_by_attr({'resource-id': 'scratch-captcha-question-container'})[
+                        0].parent
+
+                    slider_xyxy = parse_node_xyxy(slider_node)
+                    rail_xyxy = parse_node_xyxy(rail_node)
+
+                    client.device.touch.down((slider_xyxy[0] + slider_xyxy[2]) / 2,
+                                             (slider_xyxy[1] + slider_xyxy[3]) / 2)
+
+                    slider_center_cur = [(slider_xyxy[0] + slider_xyxy[2]) / 2, (slider_xyxy[1] + slider_xyxy[3]) / 2]
+
+                    t1 = time.time()
+                    captcha_try_cnt = 0
+                    while True:
+                        captcha_try_cnt += 1
+                        slider_center_cur[0] += 50
+                        slider_center_cur[1] = (slider_xyxy[1] + slider_xyxy[3]) / 2 + random.randrange(-2, 2)
+
+                        if slider_center_cur[0] > rail_xyxy[2]:
+                            print('Captcha FAIL')
+                            client.device.touch.up(0, 0)
+                            client.device.xpath.click('//android.view.View[@text=""]')
+                            break
+
+                        client.device.touch.move(slider_center_cur[0], slider_center_cur[1])
+
+                        captcha_img = client.shot_xml(captcha_node)
+                        try:
+                            right_x = self.captcha_parser.solve(captcha_img)
+                            client.device.touch.up(right_x, slider_center_cur[1])
+                            print('Solve SUCCESS')
+                            break
+                        except CaptchaSolveError:
+                            print(f'Captcha Solve attempt failed on[{captcha_try_cnt}]')
+                            pass
+                    t2 = time.time()
+                    print(f'Captcha solve elapsed {t2 - t1:.2f} seconds')
             if len(client.find_xml_by_attr(attrs={'text': '继续尝试'})) > 0:
                 client.click_xml_node(client.rs[0])
 
