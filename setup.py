@@ -10,7 +10,7 @@ from setuptools import setup
 
 setup(
     name="ez_android_automator",
-    version="1.1.0",
+    version="1.1.2",
     description="Simple project based on ui-automator-2, used for controlling android devices",
     author="EnderTheCoder",
     author_email="ggameinvader@gmail.com",

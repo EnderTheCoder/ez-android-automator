@@ -7,9 +7,11 @@
 @Motto：The only one true Legendary Grandmaster.
 """
 import time
+from typing import Callable
+
 from ez_android_automator.app_file import AppFilePkg
 from ez_android_automator.client import PublishTask, Stage, PublishClient, PhoneLoginTask, \
-    PasswordLoginTask, AndroidClient, WaitCallBackStage, TaskAsStage
+    PasswordLoginTask, AndroidClient, WaitCallBackStage, TaskAsStage, StatisticTask
 from ez_android_automator.idm_task import IDMPullTask
 
 
@@ -109,6 +111,49 @@ class PasswordLoginStage(Stage):
         client.wait_to_click({'text': '同意并继续'})
 
 
+class StatisticCenterStage(Stage):
+    def run(self, client: AndroidClient):
+        client.wait_to_click({'resource-id': 'com.xingin.xhs:id/imq'})
+        client.wait_to_click({'text': '创作中心'},timeout=10)
+        client.wait_to_click({'text': '更多笔记'})
+
+
+class GetStatisticStage(Stage):
+    def __init__(self, video_title: str, statistic_callback: Callable):
+        super().__init__()
+        self.video_title = video_title
+        self.statistic_callback = statistic_callback
+
+    def run(self, client: AndroidClient):
+        client.find_xml_by_attr({'text': self.video_title})
+        client.wait_to_click({'text': self.video_title})
+        client.wait_until_found({'text': '人均观看时长'})
+
+        def get_statistic_by_attr_name(name):
+            label_node = client.find_xml_by_attr({'text': name})
+            data_node = label_node[0].next.next
+            return int(str(data_node['text']))
+
+        statistic = {
+            'view': get_statistic_by_attr_name('观看'),
+            'like': get_statistic_by_attr_name('点赞'),
+            'comment': get_statistic_by_attr_name('评论'),
+            'collect': get_statistic_by_attr_name('收藏'),
+            'share': get_statistic_by_attr_name('笔记分享')
+        }
+        self.statistic_callback(statistic)
+
+
+class XhsStatisticTask(StatisticTask):
+    def __init__(self, video_title):
+        super().__init__()
+        self.statistic = None
+        self.append(PrepareStage())
+        self.append(OpenAppStage(0))
+        self.append(StatisticCenterStage())
+        self.append(GetStatisticStage(video_title, self.statistic_callback))
+        self.auto_serial()
+
 class XhsPublishVideoTask(PublishTask):
     """
     Publish a video on Xiaohongshu.
@@ -116,12 +161,14 @@ class XhsPublishVideoTask(PublishTask):
 
     def __init__(self, priority: int, title: str, content: str, video: str, download_timeout: int = 120):
         super().__init__(priority, title, content, video, '')
+        self.append(PrepareStage())
         task = IDMPullTask(video, download_timeout=download_timeout)
         self.stages.append(TaskAsStage(0, task))
         self.stages.append(OpenAppStage(1))
         self.stages.append(PressPublishButtonStage(2))
         self.stages.append(ChooseFirstVideoStage(3))
         self.stages.append(SetVideoOptionsStage(4, self.title, self.content))
+        self.auto_serial()
 
 
 class XhsPhoneLoginTask(PhoneLoginTask):
@@ -132,6 +179,7 @@ class XhsPhoneLoginTask(PhoneLoginTask):
         auth_stage = PhoneAuthCodeStage(3)
         self.stages.append(WaitCallBackStage(2, 60, self.get_code, auth_stage.code_callback))
         self.stages.append(auth_stage)
+        self.auto_serial()
 
 
 class XhsPasswordLoginTask(PasswordLoginTask):
