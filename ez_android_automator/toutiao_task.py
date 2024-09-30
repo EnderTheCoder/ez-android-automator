@@ -100,8 +100,8 @@ class ToutiaoPublishVideoTask(PublishTask):
     def __init__(self, priority: int, title: str, content: str, video: str):
         super().__init__(priority, title, content, video, '')
         self.append(PrepareStage())
-        # task = IDMPullTask(video)
-        # self.stages.append(TaskAsStage(0, task))
+        task = IDMPullTask(video)
+        self.stages.append(TaskAsStage(0, task))
         self.stages.append(OpenAppStage(1))
         self.stages.append(PressPublishButtonStage(2))
         self.stages.append(ChooseFirstVideoStage(3))
@@ -122,5 +122,5 @@ class ToutiaoPhoneLoginTask(PhoneLoginTask):
 
 
 toutiao_file_pkg = AppFilePkg('com.ss.android.article.news', time.time(),
-                              ['app_accs', 'app_librarian', 'app_textures', 'cache', 'databases', 'databases', 'files',
+                              ['app_accs', 'app_librarian', 'app_textures', 'cache', 'databases', 'files',
                                'shared_prefs'])
