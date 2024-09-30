@@ -284,7 +284,7 @@ class AndroidClient:
                 raise ClientWaitTimeout()
             time.sleep(0.01)
 
-    def click_center(self, coordinates: (int, int, int, int)):
+    def click_center(self, coordinates: tuple[int, int, int, int]):
         """
             Click center on a set of coordinates, usually works on simple buttons.
             Args:

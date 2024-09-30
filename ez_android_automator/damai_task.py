@@ -180,8 +180,19 @@ class SelectDateStage(Stage):
                 raise OutOfStockError(self.amount, 0)
         client.click_xml_node(rs_1[chosen_level_idx])
         client.wait_until_found({'resource-id': 'cn.damai:id/img_jia'}, intercept=False)
-        for i in range(self.amount - 1):
-            client.click_xml_node(client.rs[0])
+        rs_add = client.rs
+        client.wait_until_found({'resource-id': 'cn.damai:id/img_jian'}, intercept=False)
+        rs_reduce = client.rs
+        client.find_xml_by_attr({'resource-id': 'cn.damai:id/tv_num'})
+        found = int(str(client.rs[0]['text']).removesuffix("张"))
+        diff = self.amount - found
+        if diff > 0:
+            for idx in range(diff):
+                client.click_xml_node(rs_add[0])
+        if diff < 0:
+            diff = abs(diff)
+            for idx in range(diff):
+                client.click_xml_node(rs_reduce[0])
         if not self.ignore_num:
             client.refresh_xml()
             client.find_xml_by_attr({'resource-id': 'cn.damai:id/tv_num'})

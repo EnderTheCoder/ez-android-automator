@@ -8,9 +8,24 @@
 """
 import time
 from typing import Callable
+
+from ez_android_automator.app_file import AppFilePkg
 from ez_android_automator.client import Stage, PublishTask, PublishClient, AndroidClient, \
     PhoneLoginTask, WaitCallBackStage, PasswordLoginTask, ClientWaitTimeout, TaskAsStage
 from ez_android_automator.idm_task import IDMPullTask
+
+
+class PrepareStage(Stage):
+    """
+    Common stage for some unexpected pop-ups.
+    """
+
+    def run(self, client: PublishClient):
+        client.intercept_to_click({'text': '关闭'})
+        client.intercept_to_click({'text': '以后再说'})
+        client.intercept_to_click({'text': '始终允许'})
+        client.intercept_to_click({'text': '仅在使用中允许'})
+        client.intercept_to_click({'text': '允许'})
 
 
 class OpenAppStage(Stage):
@@ -22,7 +37,6 @@ class OpenAppStage(Stage):
         client.restart_app("com.ss.android.ugc.live", self.clear_data)
         if self.clear_data:
             client.wait_to_click({'text': '同意'})
-            client.wait_to_click({'text': '允许'})
 
 
 class PressPublishButtonStage(Stage):
@@ -121,11 +135,13 @@ class DouyinhuoshanPublishVideoTask(PublishTask):
 class DouyinhuoshanPhoneLoginTask(PhoneLoginTask):
     def __init__(self, phone: str):
         super().__init__(phone)
+        self.append(PrepareStage())
         self.stages.append(OpenAppStage(0, True))
         self.stages.append(BeforeLoginStage(1, phone))
         auth_stage = PhoneAuthCodeStage(3)
         self.stages.append(WaitCallBackStage(2, 60, self.get_code, auth_stage.code_callback))
         self.stages.append(auth_stage)
+        self.auto_serial()
 
 
 class DouyinhuoshanPasswordLoginTask(PasswordLoginTask, PhoneLoginTask):
@@ -137,3 +153,8 @@ class DouyinhuoshanPasswordLoginTask(PasswordLoginTask, PhoneLoginTask):
         self.stages.append(WaitCallBackStage(2, 60, self.get_code, auth_stage.code_callback))
         self.stages.append(auth_stage)
         self.stages.append(CompleteStage(4))
+
+
+douyinhuoshan_file_pkg = AppFilePkg('com.ss.android.ugc.live', time.time(),
+                                    ['app_accs', 'app_textures', 'databases', 'app_librarian', 'cache', 'files',
+                                     'code_cache', 'shared_prefs'])
