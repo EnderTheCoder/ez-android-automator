@@ -21,6 +21,7 @@ class InputStage(Stage):
         client.wait_to_click({'resource-id': 'idm.internet.download.manager.plus:id/buttonDefaultPositive'})
         client.wait_to_click({'text': '开始'})
         try:
+            client.wait_to_click({'text': '文件名添加编号'})
             client.wait_to_click({'text': '确认'})
         except ClientWaitTimeout:
             pass

@@ -33,6 +33,7 @@ class PrepareStage(Stage):
         client.intercept_to_click({'text': '跳过'})
         client.intercept_to_click({'text': '始终允许'})
         client.intercept_to_click({"text": "同意并继续"})
+        client.intercept_to_click({"text": "我知道了"})
         client.intercept_to_click({'resource-id': 'tv.danmaku.bili:id/count_down'})
 
 
@@ -159,9 +160,9 @@ class BilibiliPublishVideoTask(PublishTask):
 
     def __init__(self, priority: int, title: str, content: str, video: str, download_timeout: int = 120):
         super().__init__(priority, title, content, video, '')
-        self.append(PrepareStage())
+        self.stages.append(PrepareStage(0))
         task = IDMPullTask(video, download_timeout=download_timeout)
-        self.stages.append(TaskAsStage(0, task))
+        self.stages.append(TaskAsStage(1, task))
         self.stages.append(OpenAppStage())
         self.stages.append(PressPublishButtonStage(2))
         self.stages.append(ChooseFirstVideoStage(3))
@@ -172,6 +173,7 @@ class BilibiliPublishVideoTask(PublishTask):
 class BilibiliPhoneLoginTask(PhoneLoginTask):
     def __init__(self, phone: str):
         super().__init__(phone)
+        self.append(PrepareStage())
         self.stages.append(OpenAppStage(True))
         self.stages.append(BeforeLoginStage(1, phone))
         auth_stage = PhoneAuthCodeStage(3)
