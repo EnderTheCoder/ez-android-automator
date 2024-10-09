@@ -24,6 +24,7 @@ class PrepareStage(Stage):
         client.intercept_to_click({'text': '仅在使用中允许'})
         client.intercept_to_click({'text': '好的'})
         client.intercept_to_click({'text': '取消'})
+        client.intercept_to_click({'text': '同意并登录'})
 
 
 class OpenAppStage(Stage):
@@ -90,7 +91,7 @@ class PhoneAuthCodeStage(Stage):
         client.device.send_keys(self.code)
         client.wait_to_click({'text': '登录'})
         try:
-            client.wait_to_click({'text': '同意并登录'})
+            client.wait_to_click({'text': '登录'})
         except ClientWaitTimeout as e:
             pass
 
@@ -122,6 +123,7 @@ class KuaishouPublishVideoTask(PublishTask):
 
     def __init__(self, priority: int, title: str, content: str, video: str, download_timeout: int = 120):
         super().__init__(priority, title, content, video, '')
+        self.append(PrepareStage())
         task = IDMPullTask(video, download_timeout=download_timeout)
         self.stages.append(TaskAsStage(0, task))
         self.stages.append(OpenAppStage(1))
@@ -133,6 +135,7 @@ class KuaishouPublishVideoTask(PublishTask):
 class KuaishouPhoneLoginTask(PhoneLoginTask):
     def __init__(self, phone: str):
         super().__init__(phone)
+        self.append(PrepareStage())
         self.stages.append(OpenAppStage(0, True))
         self.stages.append(BeforeLoginStage(1, phone))
         auth_stage = PhoneAuthCodeStage(3)
