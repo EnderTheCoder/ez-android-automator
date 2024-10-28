@@ -698,6 +698,7 @@ class TaskAsStage(Stage):
         super().__init__(stage_serial)
         self.task = task
         self.task.sub_task = True
+        self.task.clear_interceptors = False
 
     def run(self, client: AndroidClient):
         self.task.run(client)
