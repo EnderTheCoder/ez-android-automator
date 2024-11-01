@@ -20,7 +20,11 @@ from .util import posix_path_join
 
 
 class AppFilePkg(object):
-    def __init__(self, pkg_name: Union[str, None], create_time: float, path_mappings: Union[list[str], dict[str, str]]):
+    def __init__(self,
+                 pkg_name: Union[str, None],
+                 create_time: float,
+                 path_mappings: Union[list[str], dict[str, str]],
+                 black_list: list[str] = None):
         self.pkg_name = pkg_name  # app package name
         self.create_time = create_time
         if isinstance(path_mappings, dict):
@@ -30,6 +34,10 @@ class AppFilePkg(object):
             for path_mapping in path_mappings:
                 self.path_mappings[path_mapping] = posix_path_join('/data/data', pkg_name, path_mapping)
         self.base_remote_tmp_path = '/sdcard/tmp'
+        if black_list is not None:
+            self.black_list = black_list
+        else:
+            self.black_list = []
 
     def add_path_mapping(self, pkg_path, original_path):
         self.path_mappings[pkg_path] = original_path
@@ -41,7 +49,10 @@ class AppFilePkg(object):
             'path_mappings': self.path_mappings
         }
 
-    def pull(self, root_dir, file_name, client: AndroidClient, save_storage: bool = False):
+    def black_list_contains(self, sub_str: str):
+        self.black_list.append(f'.*{sub_str}.*')
+
+    def pull(self, root_dir, file_name, client: AndroidClient, save_storage: bool = False, black_list: bool = True):
         """
         Pull file from client to server.
         :warning: the `file_name` param provided should not be duplicated. It is recommended to use random file name.
@@ -49,6 +60,7 @@ class AppFilePkg(object):
         :param file_name: data from client will be store as 2 file: <file_name>.json and <file_name>.tar.gz.
         :param client: client to execute this pull function.
         :param save_storage: whether to del tmp files in tend to save storage.
+        :param black_list: whether to use black list in pull process.
         """
         local_tmp_dir_path = str(posix_path_join(root_dir, file_name))
         remote_tmp_dir_path = str(posix_path_join(self.base_remote_tmp_path, file_name))
@@ -64,7 +76,8 @@ class AppFilePkg(object):
                 local_tmp_file_path = posix_path_join(local_tmp_dir_path, arc_name)
                 client.su_shell(['cp', '-r', remote_path, posix_path_join(remote_tmp_dir_path, arc_name)])
                 client.su_shell(['chmod', '777', '-R', posix_path_join(remote_tmp_dir_path, arc_name)])
-                client.pull(posix_path_join(remote_tmp_dir_path, arc_name), local_tmp_dir_path, True, True)
+                client.pull(posix_path_join(remote_tmp_dir_path, arc_name), local_tmp_dir_path, True, True
+                            , self.black_list if black_list else ())
                 with tarfile.open(posix_path_join(root_dir, file_name) + '.tar.gz', mode='w:gz') as tar:
                     tar.add(local_tmp_file_path, arcname=arc_name)
                     if not json_exported:
