@@ -74,9 +74,8 @@ class AppFilePkg(object):
                 arc_name = os.path.basename(arc_name)
                 client.su_shell(['cp', '-r', remote_path, posix_path_join(remote_tmp_dir_path, arc_name)])
                 client.su_shell(['chmod', '777', '-R', posix_path_join(remote_tmp_dir_path, arc_name)])
-                client.pull(posix_path_join(remote_tmp_dir_path, arc_name), local_tmp_dir_path, True, True
-                            , self.black_list if black_list else ())
-                client.pull(posix_path_join(remote_tmp_dir_path, arc_name), local_tmp_dir_path, True, True)
+                client.pull(posix_path_join(remote_tmp_dir_path, arc_name), local_tmp_dir_path, True, True,
+                            self.black_list if black_list else ())
                 if not json_exported:
                     json_exported = True
                     json_path = posix_path_join(local_tmp_dir_path, '.package_info.json')
