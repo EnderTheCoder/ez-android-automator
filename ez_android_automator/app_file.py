@@ -51,9 +51,11 @@ class AppFilePkg(object):
     def black_list_contains(self, sub_str: str):
         self.black_list.append(f'.*{sub_str}.*')
 
-    def pull(self, root_dir, file_name, client: AndroidClient, save_storage: bool = False, black_list: bool = True):
+    def pull(self, root_dir, file_name, client: AndroidClient, save_storage: bool = False, black_list: bool = True,
+             rm_cache_on_failure: bool = False):
         """
         Pull file from client to server.
+        :param rm_cache_on_failure: when enabled, cached files will be removed once uncaught exception was thrown.
         :warning: the `file_name` param provided should not be duplicated. It is recommended to use random file name.
         :param root_dir: a local directory to pull file,
         :param file_name: data from client will be store as file: <file_name>.json
@@ -86,7 +88,8 @@ class AppFilePkg(object):
             if client.exists(remote_tmp_dir_path):
                 client.rmdir(remote_tmp_dir_path)
         except Exception as e:
-            shutil.rmtree(local_tmp_dir_path)  # clear tmp file dir if the client failed to pull.
+            if rm_cache_on_failure:
+                shutil.rmtree(local_tmp_dir_path)  # clear tmp file dir if the client failed to pull.
             if client.exists(remote_tmp_dir_path):
                 client.rmdir(remote_tmp_dir_path)
             raise e
