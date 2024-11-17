@@ -9,6 +9,7 @@
 This file contains ez_android_automator classes and helper functions relating Client, Task and Exception.
 """
 import os
+import re
 import threading
 import warnings
 from typing import Callable, Any, Union, Optional
@@ -206,8 +207,12 @@ class AndroidClient:
                 res.append(output.strip())
         return res
 
-    def pull(self, src: str, dst: str, su: bool = False, skip_not_found: bool = False) -> None:
+    def pull(self, src: str, dst: str, su: bool = False, skip_not_found: bool = False, black_list: list = ()) -> None:
         basename = os.path.basename(src)
+        for pattern in black_list:
+            if re.match(pattern, basename):
+                print('skipping file matched in black_list:', src)
+                return
         try:
             if self.is_file(src, su):
                 print(src)
@@ -216,7 +221,7 @@ class AndroidClient:
                 os.makedirs(posix_path_join(dst, basename), exist_ok=True)
                 for file_name in self.ls(src, su):
                     next_path = posix_path_join(src, file_name)
-                    self.pull(next_path, posix_path_join(dst, basename), su)
+                    self.pull(next_path, posix_path_join(dst, basename), su, black_list=black_list)
         except FileNotFoundError as e:
             if not skip_not_found:
                 raise e
@@ -284,7 +289,7 @@ class AndroidClient:
                 raise ClientWaitTimeout()
             time.sleep(0.01)
 
-    def click_center(self, coordinates: (int, int, int, int)):
+    def click_center(self, coordinates: tuple[int, int, int, int]):
         """
             Click center on a set of coordinates, usually works on simple buttons.
             Args:
@@ -693,6 +698,7 @@ class TaskAsStage(Stage):
         super().__init__(stage_serial)
         self.task = task
         self.task.sub_task = True
+        self.task.clear_interceptors = False
 
     def run(self, client: AndroidClient):
         self.task.run(client)

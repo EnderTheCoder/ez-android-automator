@@ -48,10 +48,10 @@ class PressPublishButtonStage(Stage):
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
-        # client.wait_to_click({'resource-id': 'com.lbe.security.miui:id/permission_allow_foreground_only_button'})
-        # client.wait_to_click({'resource-id': 'com.lbe.security.miui:id/permission_allow_foreground_only_button'})
+        client.wait_to_click({'resource-id': 'com.lbe.security.miui:id/permission_allow_foreground_only_button'})
+        client.wait_to_click({'resource-id': 'com.lbe.security.miui:id/permission_allow_foreground_only_button'})
         client.wait_to_click({'text': '相册'})
-        # client.wait_to_click({"resource-id": "com.lbe.security.miui:id/permission_allow_button"})
+        client.wait_to_click({"resource-id": "com.lbe.security.miui:id/permission_allow_button"})
         client.wait_to_click({'text': '视频'})
         time.sleep(2)
         client.device.click(200, 550)
