@@ -172,7 +172,7 @@ class AndroidClient:
         """
         Test if a path is file.
         Args:
-            path (str): path to be teste.d
+            path (str): path to be tested
             su: use superuser
         Returns:
              True if the path is file, False is directory.
