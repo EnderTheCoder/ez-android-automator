@@ -34,6 +34,7 @@ class PrepareStage(Stage):
         client.intercept_to_click({'text': '始终允许'})
         client.intercept_to_click({"text": "同意并继续"})
         client.intercept_to_click({"text": "我知道了"})
+        client.intercept_to_click({"text": "知道了"})
         client.intercept_to_click({'resource-id': 'tv.danmaku.bili:id/count_down'})
 
 
