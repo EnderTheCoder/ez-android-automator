@@ -34,6 +34,7 @@ class PrepareStage(Stage):
         client.intercept_to_click({'text': '始终允许'})
         client.intercept_to_click({"text": "同意并继续"})
         client.intercept_to_click({"text": "我知道了"})
+        client.intercept_to_click({"text": "知道了"})
         client.intercept_to_click({'resource-id': 'tv.danmaku.bili:id/count_down'})
 
 
@@ -64,13 +65,14 @@ class PhoneAuthCodeStage(Stage):
 
 class PressPublishButtonStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({"content-desc": "发布内容,5之3,标签"}, gap=1)
+        time.sleep(2)
+        client.wait_to_click({"content-desc": "发布内容,5之3,标签"})
 
 
 class ChooseFirstVideoStage(Stage):
     def run(self, client: PublishClient):
-        client.wait_to_click({'text': '视频'}, timeout=10)
-        client.wait_to_click({'text': '视频'}, timeout=10)
+        client.wait_to_click({'text': '视频'}, timeout=300)
+        client.wait_to_click({'text': '视频'}, timeout=300)
         client.wait_to_click({'resource-id': 'tv.danmaku.bili:id/sdv_cover'})
         client.wait_to_click({'text': '发布'}, gap=2)
 
@@ -185,8 +187,9 @@ class BilibiliPhoneLoginTask(PhoneLoginTask):
 class BilibiliFilePkg(AppFilePkg):
     def __init__(self):
         super().__init__('tv.danmaku.bili', time.time(), [
-            'shared_prefs', 'app_blkv', 'files', 'cache', 'app_device_settings', 'databases', 'app_account'
+            'shared_prefs', 'app_blkv', 'files', 'app_device_settings', 'databases', 'app_account'
         ])
+        self.black_list_contains('cache')
 
 
 bilibili_file_pkg = BilibiliFilePkg()

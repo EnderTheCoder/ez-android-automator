@@ -12,7 +12,6 @@ Remember to use rooted devices to upload/download app data files in /data/data d
 import json
 import os
 import shutil
-import tarfile
 from typing import Union
 
 from .client import AndroidClient, ClientTask, Stage, StopAppStage, ClearAppStage
@@ -52,12 +51,14 @@ class AppFilePkg(object):
     def black_list_contains(self, sub_str: str):
         self.black_list.append(f'.*{sub_str}.*')
 
-    def pull(self, root_dir, file_name, client: AndroidClient, save_storage: bool = False, black_list: bool = True):
+    def pull(self, root_dir, file_name, client: AndroidClient, save_storage: bool = False, black_list: bool = True,
+             rm_cache_on_failure: bool = False):
         """
         Pull file from client to server.
+        :param rm_cache_on_failure: when enabled, cached files will be removed once uncaught exception was thrown.
         :warning: the `file_name` param provided should not be duplicated. It is recommended to use random file name.
         :param root_dir: a local directory to pull file,
-        :param file_name: data from client will be store as 2 file: <file_name>.json and <file_name>.tar.gz.
+        :param file_name: data from client will be store as file: <file_name>.json
         :param client: client to execute this pull function.
         :param save_storage: whether to del tmp files in tend to save storage.
         :param black_list: whether to use black list in pull process.
@@ -73,25 +74,22 @@ class AppFilePkg(object):
             json_exported = False
             for arc_name, remote_path in self.path_mappings.items():
                 arc_name = os.path.basename(arc_name)
-                local_tmp_file_path = posix_path_join(local_tmp_dir_path, arc_name)
                 client.su_shell(['cp', '-r', remote_path, posix_path_join(remote_tmp_dir_path, arc_name)])
                 client.su_shell(['chmod', '777', '-R', posix_path_join(remote_tmp_dir_path, arc_name)])
-                client.pull(posix_path_join(remote_tmp_dir_path, arc_name), local_tmp_dir_path, True, True
-                            , self.black_list if black_list else ())
-                with tarfile.open(posix_path_join(root_dir, file_name) + '.tar.gz', mode='w:gz') as tar:
-                    tar.add(local_tmp_file_path, arcname=arc_name)
-                    if not json_exported:
-                        json_exported = True
-                        json_path = posix_path_join(local_tmp_dir_path, '.package_info.json')
-                        with open(json_path, 'w') as json_f:
-                            json.dump(self.dict(), json_f)
-                            tar.add(json_path)
+                client.pull(posix_path_join(remote_tmp_dir_path, arc_name), local_tmp_dir_path, True, True,
+                            self.black_list if black_list else ())
+                if not json_exported:
+                    json_exported = True
+                    json_path = posix_path_join(local_tmp_dir_path, '.package_info.json')
+                    with open(json_path, 'w') as json_f:
+                        json.dump(self.dict(), json_f)
             if save_storage:
                 shutil.rmtree(local_tmp_dir_path)
             if client.exists(remote_tmp_dir_path):
                 client.rmdir(remote_tmp_dir_path)
         except Exception as e:
-            shutil.rmtree(local_tmp_dir_path)  # clear tmp file dir if the client failed to pull.
+            if rm_cache_on_failure:
+                shutil.rmtree(local_tmp_dir_path)  # clear tmp file dir if the client failed to pull.
             if client.exists(remote_tmp_dir_path):
                 client.rmdir(remote_tmp_dir_path)
             raise e
@@ -100,16 +98,13 @@ class AppFilePkg(object):
         """
         Push file from server to client.
         :param root_dir: a local directory to find files and extract them.
-        :param file_name: data from client will be read from 2 file: <file_name>.json and <file_name>.tar.gz.
+        :param file_name: data from client will be read from file: <file_name>.json
         :param client: client to execute this push function.
         :param save_storage: whether to del tmp files in tend to save storage.
         """
         local_tmp_dir_path = str(posix_path_join(root_dir, file_name))
         remote_tmp_dir_path = str(posix_path_join(self.base_remote_tmp_path, file_name))
         try:
-            if not os.path.exists(local_tmp_dir_path):
-                with tarfile.open(f'{file_name}.tar.gz', mode='r:gz') as tar_ref:
-                    tar_ref.extractall(local_tmp_dir_path)
             if not client.exists(self.base_remote_tmp_path):
                 client.mkdir(self.base_remote_tmp_path)
             client.mkdir(posix_path_join(self.base_remote_tmp_path, file_name), exists_ok=True)
