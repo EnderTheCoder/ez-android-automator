@@ -86,7 +86,7 @@ class AndroidClient:
         self.task = None
         self.task: ClientTask
         self.rs: bs4.ResultSet
-        self.occupied = False
+        self.locked = False
         self.xml_interceptors = {}
         self.parser: BeautifulSoup
         self.debug_msg = False
@@ -392,13 +392,13 @@ class AndroidClient:
         time.sleep(wait_after)
 
     def lock(self):
-        self.occupied = True
+        self.locked = True
 
     def unlock(self):
-        self.occupied = False
+        self.locked = False
 
     def is_usable(self):
-        return self.task is None or self.task.is_finished() or self.task.is_exception() and not self.lock
+        return self.task is None or self.task.is_finished() or self.task.is_exception() and not self.locked
 
     def clear_task(self):
         self.task = None
